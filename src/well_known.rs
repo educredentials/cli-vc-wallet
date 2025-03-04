@@ -40,6 +40,8 @@ impl From<serde_json::Error> for FetchError {
 
 #[derive(Deserialize, Debug)]
 pub struct CredentialIssuerMetadata {
+    pub credential_issuer: String,
+    pub credential_endpoint: String,
     pub authorization_servers: Option<Vec<String>>,
 }
 

@@ -32,12 +32,13 @@ impl OpenIdCredentialOffer {
 #[derive(Deserialize, Debug)]
 pub struct CredentialOffer {
     pub credential_issuer: String,
+    pub credential_configuration_ids: Vec<String>,
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::Url;
     use super::*;
+    use crate::Url;
 
     #[test]
     fn deserialize_co_by_value() {
@@ -56,7 +57,6 @@ mod tests {
                 .expect("No credential offer"),
         )
         .expect("Could not deserialize credential offer");
-
 
         assert_eq!(
             credential_offer.credential_issuer,

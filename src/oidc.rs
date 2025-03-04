@@ -1,13 +1,13 @@
 use anyhow::anyhow;
-use openidconnect::core::{
-    CoreAuthenticationFlow, CoreClient, CoreProviderMetadata, CoreUserInfoClaims,
-};
-use openidconnect::{reqwest, AccessToken};
+use openidconnect::core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata};
 use openidconnect::{
-    AccessTokenHash, AuthorizationCode, ClientId, ClientSecret, CsrfToken, IssuerUrl, Nonce,
-    OAuth2TokenResponse, PkceCodeChallenge, RedirectUrl, Scope, TokenResponse,
+    reqwest, AccessTokenHash, AuthorizationCode, ClientId, ClientSecret, CsrfToken, IssuerUrl,
+    Nonce, OAuth2TokenResponse, PkceCodeChallenge, RedirectUrl, Scope, TokenResponse,
 };
 use url::Url;
+
+// Re-exports
+pub use openidconnect::AccessToken;
 
 pub fn do_the_dance(
     base_url: Url,
@@ -15,7 +15,7 @@ pub fn do_the_dance(
     client_id: String,
     client_secret: Option<String>,
     prompt_cb: fn(String) -> String,
-) -> Result<AccessToken, anyhow::Error> {
+) -> Result<(AccessToken, Nonce), anyhow::Error> {
     let http_client = reqwest::blocking::ClientBuilder::new()
         // Following redirects opens the client up to SSRF vulnerabilities.
         .redirect(reqwest::redirect::Policy::none())
@@ -34,9 +34,7 @@ pub fn do_the_dance(
     let client = CoreClient::from_provider_metadata(
         provider_metadata,
         ClientId::new(client_id),
-        client_secret.map(|client_secret| {
-            ClientSecret::new(client_secret)
-        }),
+        client_secret.map(|client_secret| ClientSecret::new(client_secret)),
     )
     // Set the URL the user will be redirected to after the authorization process.
     .set_redirect_uri(RedirectUrl::new(redirect_url.to_string())?);
@@ -93,5 +91,5 @@ pub fn do_the_dance(
         }
     }
 
-    Ok(token_response.access_token().clone())
+    Ok((token_response.access_token().clone(), nonce.clone()))
 }

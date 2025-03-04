@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.97"
+jsonwebtoken = "9.3.1"
 openidconnect = { features = ["reqwest-blocking"], version = "4.0.0" }
 reqwest = { features = ["blocking"], version = "0.12.12" }
 serde = { features = ["derive"], version = "1.0.218" }
