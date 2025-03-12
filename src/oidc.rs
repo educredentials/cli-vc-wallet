@@ -19,12 +19,13 @@ pub fn do_the_dance(
     let http_client = reqwest::blocking::ClientBuilder::new()
         // Following redirects opens the client up to SSRF vulnerabilities.
         .redirect(reqwest::redirect::Policy::none())
+        .connection_verbose(true)
         .build()
         .expect("Client should build");
 
     // Use OpenID Connect Discovery to fetch the provider metadata.
     // normalize the URL by ensuring there's always a trailing slash.
-    let base_url = base_url.join("/")?;
+    // let base_url = base_url.join("/")?;
     let issuer_url = IssuerUrl::new(base_url.to_string())?;
 
     let provider_metadata = CoreProviderMetadata::discover(&issuer_url, &http_client)?;
@@ -49,27 +50,28 @@ pub fn do_the_dance(
             CsrfToken::new_random,
             Nonce::new_random,
         )
-        // Set the desired scopes.
-        .add_scope(Scope::new("read".to_string()))
-        .add_scope(Scope::new("write".to_string()))
-        // Set the PKCE code challenge.
-        .set_pkce_challenge(pkce_challenge)
+        .add_scope(Scope::new("profile".to_string()))
+        .add_scope(Scope::new("email".to_string()))
+        .set_pkce_challenge(pkce_challenge) // Set the PKCE code challenge.
         .url();
 
     // This is the URL you should redirect the user to, in order to trigger the authorization
-    // process.
+    // process. We call the callback that, eventually returns the token from the redirect url that
+    // the user landed on.
     let token = prompt_cb(auth_url.to_string());
 
-    // Once the user has been redirected to the redirect URL, you'll have access to the
-    // authorization code. For security reasons, your code should verify that the `state`
-    // parameter returned by the server matches `csrf_state`.
-
     // Now you can exchange it for an access token and ID token.
-    let token_response = client
+    let exchange_client = client
         .exchange_code(AuthorizationCode::new(token.to_string()))?
-        // Set the PKCE code verifier.
-        .set_pkce_verifier(pkce_verifier)
-        .request(&http_client)?;
+        .set_pkce_verifier(pkce_verifier);
+    println!("Exchanging code for token at {:?}", client.token_uri());
+
+    let token_response = exchange_client.request(&http_client)?;
+    println!(
+        "Recieved access token of type: {:?}, and the value is {:?}",
+        token_response.token_type(),
+        token_response.access_token().secret()
+    );
 
     // Extract the ID token claims after verifying its authenticity and nonce.
     let id_token = token_response
@@ -90,6 +92,16 @@ pub fn do_the_dance(
             return Err(anyhow!("Invalid access token"));
         }
     }
+
+    println!(
+        "User {} with e-mail address {} has authenticated successfully for {:?}",
+        claims.subject().as_str(),
+        claims
+            .email()
+            .map(|email| email.as_str())
+            .unwrap_or("<not provided>"),
+        claims.audiences(),
+    );
 
     Ok((token_response.access_token().clone(), nonce.clone()))
 }

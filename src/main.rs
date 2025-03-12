@@ -1,5 +1,8 @@
 use jwt::JwtProof;
+use openidconnect::AccessToken;
 use url::Url;
+
+use dialoguer::Input;
 
 mod credential;
 mod jwt;
@@ -9,21 +12,27 @@ mod well_known;
 
 use credential::{Credential, CredentialError, CredentialRequest};
 use offer::{CredentialOffer, OpenIdCredentialOffer};
-use oidc::{do_the_dance, AccessToken};
+use oidc::do_the_dance;
 use well_known::{get_from, CredentialIssuerMetadata};
 
 fn main() {
+    env_logger::init();
     // client_id and client_secret from ENV
     let client_id = std::env::var("OIDC_CLIENT_ID").expect("OIDC_CLIENT_ID ENV var not set");
     let client_secret =
         std::env::var("OIDC_CLIENT_SECRET").expect("OIDC_CLIENT_SECRET ENV var not set");
     let private_key = std::env::var("PRIVATE_KEY").expect("PRIVATE_KEY ENV var not set");
 
-    // read offer from offer.txt
-    let offer_input = std::fs::read_to_string("offer.txt")
-        .expect("Could not read offer.txt")
-        .trim()
-        .to_string();
+    // Read the offer from STDIN
+    let mut offer_input = String::new();
+    std::io::stdin()
+        .read_line(&mut offer_input)
+        .expect("Could not read line");
+    let offer_input = offer_input.trim().to_string();
+    if offer_input.is_empty() {
+        eprintln!("Expected input from STDIN, but got an empty string.");
+        return;
+    }
     log("Input", Some(&offer_input));
 
     let uri = Url::parse(&offer_input).expect("Could not parse URL");
@@ -66,9 +75,10 @@ fn main() {
     );
 
     // TODO: We should probably start a server on the redirect URL and capture the token there
+    let redirect_url = Url::parse("http://localhost:8002").unwrap();
     let (access_token, nonce) = do_the_dance(
         first_authorization_server,
-        Url::parse("http://localhost:8000").unwrap(),
+        redirect_url,
         client_id,
         Some(client_secret),
         prompt_code_url,
@@ -105,39 +115,49 @@ fn fetch_credential(
 ) -> Result<Credential, CredentialError> {
     let credentialrequest = CredentialRequest::new(configuration_id, proof);
 
-    println!("POST {}", &well_known.credential_endpoint);
-    println!("Authorization: Bearer {}", access_token.secret());
-    println!("Credential Request: {:?}", credentialrequest);
+    let body =
+        serde_json::to_string(&credentialrequest).expect("Could not serialize CredentialRequest");
 
-    let body = serde_json::to_string(&credentialrequest).expect("Could not serialize CredentialRequest");
+    let client = reqwest::blocking::ClientBuilder::new()
+        .connection_verbose(true)
+        .build()
+        .expect("Could not create client");
 
-    let client = reqwest::blocking::Client::new();
     let response = client
         .post(&well_known.credential_endpoint)
         .header("Authorization", format!("Bearer {}", access_token.secret()))
         .header("Content-Type", "application/json")
-        .body(body).send().expect("Could not send request");
+        .body(body)
+        .send()
+        .expect("Could not send request");
 
-    dbg!(&response);
-    // INK: stuck here, with the response being a 400 Bad Request
-    // and the agent logging "sphereon-standalone-agent-full  | sendErrorResponse (400): {"error":"invalid_token"}
-    dbg!(&response.text());
+    log("Response", Some(&response));
+    // TODO: Check the response status and return an error if it's not 200
+    // TODO: Deserialize the response into a Credential
     Ok(Credential {})
 }
 
 fn prompt_code_url(message: String) -> String {
     println!("Open the following url in your browser: {}", message);
 
-    let mut input = String::new();
-    println!("Paste the full redirect URL here:");
-    std::io::stdin()
-        .read_line(&mut input)
-        .expect("Could not read line");
+    let input: String = Input::new()
+        .with_prompt("Paste the full redirect URL here")
+        .interact()
+        .unwrap();
+    // Check if the input is empty
+    if input.trim().is_empty() {
+        eprintln!("Expected input for URL, but got an empty string.");
+        panic!("No input provided");
+    }
 
     let redirect_url = Url::parse(&input).expect("Could not parse URL");
-    let token = redirect_url.query_pairs().next().unwrap().1;
+    let token = redirect_url
+        .query_pairs()
+        .find(|(key, _)| key == "code")
+        .map(|(_, value)| value)
+        .expect("No code in URL");
 
-    println!("Received authorization code: {}", token);
+    log("Received authorization code:", Some(&token));
 
     token.to_string()
 }
