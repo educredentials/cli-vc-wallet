@@ -2,12 +2,13 @@ use jwt::JwtProof;
 use openidconnect::AccessToken;
 use url::Url;
 
-use dialoguer::Input;
+use tokio;
 
 mod credential;
 mod jwt;
 mod offer;
 mod oidc;
+mod redirect_server;
 mod well_known;
 
 use credential::{Credential, CredentialError, CredentialRequest};
@@ -15,7 +16,8 @@ use offer::{CredentialOffer, OpenIdCredentialOffer};
 use oidc::do_the_dance;
 use well_known::{get_from, CredentialIssuerMetadata};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     env_logger::init();
     // client_id and client_secret from ENV
     let client_id = std::env::var("OIDC_CLIENT_ID").expect("OIDC_CLIENT_ID ENV var not set");
@@ -54,17 +56,13 @@ fn main() {
         log("Credential Offer by Reference", None::<&String>);
         todo!("Implement Fetching the Credential Offer");
     }
-
     log("Credential Offer", Some(&offer));
+
     log(
-        "Getting well-known Configuration from ",
+        "Getting Server Metadata for issuer",
         Some(&offer.credential_issuer),
     );
-
-    let well_known = get_from(offer.credential_issuer).unwrap();
-    // TODO: Check that proof_types_supported contains "jwt" and that cryptographic_suites_supported
-    // is one we support
-
+    let well_known = get_from(offer.credential_issuer).await.unwrap();
     let first_authorization_server = well_known
         .first_authorization_server()
         .expect("No Authorization Servers found");
@@ -75,14 +73,14 @@ fn main() {
     );
 
     // TODO: We should probably start a server on the redirect URL and capture the token there
-    let redirect_url = Url::parse("http://localhost:8002").unwrap();
+    let redirect_url = Url::parse("http://localhost:8000").unwrap();
     let (access_token, nonce) = do_the_dance(
         first_authorization_server,
         redirect_url,
         client_id,
         Some(client_secret),
-        prompt_code_url,
     )
+    .await
     .expect("Could not authenticate and authorize user");
 
     log("Access Token", Some(&access_token.secret()));
@@ -103,11 +101,11 @@ fn main() {
     );
     log("Proof", Some(&proof));
     let credential: Credential =
-        fetch_credential(&access_token, &well_known, configuration_id, proof).unwrap();
+        fetch_credential(&access_token, &well_known, configuration_id, proof).await.unwrap();
     log("Credential", Some(&credential));
 }
 
-fn fetch_credential(
+async fn fetch_credential(
     access_token: &AccessToken,
     well_known: &CredentialIssuerMetadata, // TODO: do we need the entire well_known here or just the credential_endpoint?
     configuration_id: String,
@@ -118,7 +116,7 @@ fn fetch_credential(
     let body =
         serde_json::to_string(&credentialrequest).expect("Could not serialize CredentialRequest");
 
-    let client = reqwest::blocking::ClientBuilder::new()
+    let client = reqwest::ClientBuilder::new()
         .connection_verbose(true)
         .build()
         .expect("Could not create client");
@@ -129,37 +127,13 @@ fn fetch_credential(
         .header("Content-Type", "application/json")
         .body(body)
         .send()
+        .await
         .expect("Could not send request");
 
     log("Response", Some(&response));
     // TODO: Check the response status and return an error if it's not 200
     // TODO: Deserialize the response into a Credential
     Ok(Credential {})
-}
-
-fn prompt_code_url(message: String) -> String {
-    println!("Open the following url in your browser: {}", message);
-
-    let input: String = Input::new()
-        .with_prompt("Paste the full redirect URL here")
-        .interact()
-        .unwrap();
-    // Check if the input is empty
-    if input.trim().is_empty() {
-        eprintln!("Expected input for URL, but got an empty string.");
-        panic!("No input provided");
-    }
-
-    let redirect_url = Url::parse(&input).expect("Could not parse URL");
-    let token = redirect_url
-        .query_pairs()
-        .find(|(key, _)| key == "code")
-        .map(|(_, value)| value)
-        .expect("No code in URL");
-
-    log("Received authorization code:", Some(&token));
-
-    token.to_string()
 }
 
 // Helper function to log a message and an optional value

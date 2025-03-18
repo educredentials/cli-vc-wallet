@@ -9,14 +9,16 @@ use url::Url;
 // Re-exports
 pub use openidconnect::AccessToken;
 
-pub fn do_the_dance(
+use crate::log;
+use crate::redirect_server::start_redirect_server;
+
+pub async fn do_the_dance(
     base_url: Url,
     redirect_url: Url,
     client_id: String,
     client_secret: Option<String>,
-    prompt_cb: fn(String) -> String,
 ) -> Result<(AccessToken, Nonce), anyhow::Error> {
-    let http_client = reqwest::blocking::ClientBuilder::new()
+    let http_client = reqwest::ClientBuilder::new()
         // Following redirects opens the client up to SSRF vulnerabilities.
         .redirect(reqwest::redirect::Policy::none())
         .connection_verbose(true)
@@ -28,7 +30,7 @@ pub fn do_the_dance(
     // let base_url = base_url.join("/")?;
     let issuer_url = IssuerUrl::new(base_url.to_string())?;
 
-    let provider_metadata = CoreProviderMetadata::discover(&issuer_url, &http_client)?;
+    let provider_metadata = CoreProviderMetadata::discover_async(issuer_url, &http_client).await?;
 
     // Create an OpenID Connect client by specifying the client ID, client secret, authorization URL
     // and token URL.
@@ -55,10 +57,11 @@ pub fn do_the_dance(
         .set_pkce_challenge(pkce_challenge) // Set the PKCE code challenge.
         .url();
 
-    // This is the URL you should redirect the user to, in order to trigger the authorization
-    // process. We call the callback that, eventually returns the token from the redirect url that
-    // the user landed on.
-    let token = prompt_cb(auth_url.to_string());
+    println!("Open the following url in your browser: {}", auth_url);
+
+    let token = start_redirect_server().await;
+
+    log("Received authorization code:", Some(&token));
 
     // Now you can exchange it for an access token and ID token.
     let exchange_client = client
@@ -66,7 +69,7 @@ pub fn do_the_dance(
         .set_pkce_verifier(pkce_verifier);
     println!("Exchanging code for token at {:?}", client.token_uri());
 
-    let token_response = exchange_client.request(&http_client)?;
+    let token_response = exchange_client.request_async(&http_client).await?;
     println!(
         "Recieved access token of type: {:?}, and the value is {:?}",
         token_response.token_type(),

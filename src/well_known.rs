@@ -1,14 +1,17 @@
 use core::fmt;
 
-use reqwest::blocking::Client;
+use reqwest;
 use serde::Deserialize;
 use url::Url;
 
-pub fn get_from(base_url: String) -> Result<CredentialIssuerMetadata, FetchError> {
-    let client = Client::new();
+pub async fn get_from(base_url: String) -> Result<CredentialIssuerMetadata, FetchError> {
+    let client = reqwest::ClientBuilder::new()
+        .redirect(reqwest::redirect::Policy::none())
+        .connection_verbose(true)
+        .build()?;
     let well_known_url = format!("{}/.well-known/openid-credential-issuer", base_url);
-    let response = client.get(well_known_url).send()?;
-    Ok(serde_json::from_str(&response.text()?)?)
+    let response = client.get(well_known_url).send().await?;
+    Ok(serde_json::from_str(&response.text().await?)?)
 }
 
 #[derive(Debug)]

@@ -1,0 +1,1 @@
+openid-credential-offer://?credential_offer=%7B%22credential_issuer%22%3A%22https%3A%2F%2Fimpala-bright-grub.ngrok-free.app%2Foid4vci%22%2C%22credential_configuration_ids%22%3A%5B%22PensionSdJwt%22%5D%2C%22grants%22%3A%7B%22authorization_code%22%3A%7B%22issuer_state%22%3A%22auth-9185-4e60-9901-d291e1338d7a%22%7D%7D%2C%22client_id%22%3A%22wallet%22%7D
