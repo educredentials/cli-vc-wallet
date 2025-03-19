@@ -15,6 +15,7 @@ The wallet is meant as a **tool for develolopers and implementors of verifiable 
 * Third party libraries should be wrapped in a way that they adhere to these above design goals.
 * Results should be printed to stdout as plain text or json.
 * Commands that take an input, should take it from stdin.
+* The wallet is entirely stateless. Any state needed for signing, listing, requesting must be passed into the commands as input. 
 * We support only the latest versions of specs.
 
 ## Non Design goals
