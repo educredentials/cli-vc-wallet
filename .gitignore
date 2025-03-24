@@ -1,2 +1,9 @@
+# Build artifacts
 /target
+
+##
+# Secrets
 .env
+keys/*
+# But keep the .gitkeep file
+!keys/.gitkeep
