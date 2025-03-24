@@ -4,6 +4,7 @@ use url::Url;
 
 use tokio;
 
+mod cli;
 mod credential;
 mod jwt;
 mod offer;
@@ -24,6 +25,7 @@ async fn main() {
     let client_secret =
         std::env::var("OIDC_CLIENT_SECRET").expect("OIDC_CLIENT_SECRET ENV var not set");
     let private_key = std::env::var("PRIVATE_KEY").expect("PRIVATE_KEY ENV var not set");
+    let x509_cert = std::env::var("X509_DER_CERT_BASE46").expect("X509_DER_CERT_BASE46 ENV var not set");
 
     // Read the offer from STDIN
     let mut offer_input = String::new();
@@ -93,7 +95,7 @@ async fn main() {
     }
 
     // build our proof
-    let jwt_key = JwtProof::new(&private_key, "cli-vc-wallet");
+    let jwt_key = JwtProof::new(&private_key, &x509_cert, "cli-vc-wallet");
     let proof = jwt_key.create_jwt(
         &well_known.credential_issuer,
         jwt::current_timestamp(),

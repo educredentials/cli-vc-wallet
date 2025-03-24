@@ -4,17 +4,11 @@ use serde::Serialize;
 #[derive(Debug)]
 pub struct Credential {}
 
-#[derive(Debug, Serialize)]
-#[serde(untagged, rename_all = "snake_case")]
-enum CredentialRequestFormat {
-    JwtVcJSON,
-}
-
 // TODO: implement "proofs" and "credential_response_encryption"
 // TODO: decide on credential_identifier if we can get this from the token endpoint
 #[derive(Serialize, Debug)]
 pub struct CredentialRequest {
-    format: CredentialRequestFormat,
+    format: String,
     credential_configuration_id: String,
     proof: Option<Proof>,
 }
@@ -25,9 +19,8 @@ impl CredentialRequest {
             proof_type: "jwt".to_string(),
             jwt: Some(jwt_proof),
         });
-        let format = CredentialRequestFormat::JwtVcJSON;
         Self {
-            format,
+            format: "jwt_vc_json".to_string(),
             credential_configuration_id,
             proof,
         }

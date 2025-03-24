@@ -26,7 +26,6 @@ pub async fn start_redirect_server() -> String {
     // Start the server
     let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
     let listener = TcpListener::bind(addr).await.expect("Failed to bind to port 8000");
-    println!("Starting OAuth redirect server on http://{}", addr);
 
     // Create a cancellation channel
     let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
