@@ -77,7 +77,6 @@ async fn main() {
         Some(&first_authorization_server.to_string()),
     );
 
-    // TODO: We should probably start a server on the redirect URL and capture the token there
     let redirect_url = Url::parse("http://localhost:8000").unwrap();
     let (access_token, nonce) = do_the_dance(
         first_authorization_server,
