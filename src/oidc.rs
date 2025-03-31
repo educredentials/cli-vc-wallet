@@ -26,9 +26,9 @@ pub async fn do_the_dance(
         .expect("Client should build");
 
     // Use OpenID Connect Discovery to fetch the provider metadata.
-    // normalize the URL by ensuring there's always a trailing slash.
-    // let base_url = base_url.join("/")?;
-    let issuer_url = IssuerUrl::new(base_url.to_string())?;
+    // normalize the URL by ensuring there is no trailing slash
+    let normalized_url = base_url.to_string().trim_end_matches('/').to_string();
+    let issuer_url = IssuerUrl::new(normalized_url)?;
 
     let provider_metadata = CoreProviderMetadata::discover_async(issuer_url, &http_client).await?;
 
