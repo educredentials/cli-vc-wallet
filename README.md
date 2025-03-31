@@ -4,6 +4,44 @@ A commandline tool that simulates a wallet which can hold and interact with [ver
 
 The wallet is meant as a **tool for develolopers and implementors of verifiable credential services**.
 
+## Components
+
+WIP. Currently there's still just a single command, but once that is working
+through the happy path, we will split it up into smaller commands.
+
+Planned commands are:
+
+- [ ] `vc-wallet offer` - given a credential offer, resolves it if necessary, and prints a normalized offer to stdout. Amongst the information is:
+   - [ ] Whether the offer is by value or by reference
+   - [ ] Whether the credential request goes via the Authorization Code Flow or is pre-authorized
+   - [ ] Any potential pre-shared secrets, or requirement thereof
+   - [ ] The credential type, types or credentials in the offer
+- [ ] `vc-wallet authorize` - given a normalized offer, starts an authorization code flow via the openid connect protocol. It will:
+   - [ ] print the authorization URL to stdout
+   - [ ] start a local webserver to receive the callback
+   - [ ] exchange the authorization code for an access token
+   - [ ] print the resulting access token to stdout on success
+   - [ ] print the error to stderr on failure
+- [ ] `vc-wallet issuer` - given a normalized offer, or an issuer URL, requests issuer metadata and shows
+   - [ ] possible Proof types and algorithms the issuer supports
+   - [ ] issuers' authorization server if set
+   - [ ] issuers' endpoint
+   - [ ] issuers' DID
+   - [ ] issuers' public key(s)
+   - [ ] issuers' supported credential types.
+- [ ] `vc-wallet request` - given a normalized offer and one of below, requests the credential from the issuer
+   - [ ] EITHER an access token,
+   - [ ] OR a pre-shared secret
+   - [ ] allow the user to choose a proof type and algorithm using a commandline argument
+   - [ ] show the user the proof that will be sent to the issuer
+   - [ ] request the credential from the issuer
+   - [ ] print the credential to stdout
+- [ ] `vc-wallet verify` - given a credential, verifies the proof and the credential
+   - [ ] show the user the proof that was sent by the issuer
+   - [ ] verify the proof
+   - [ ] verify the credential
+   - [ ] print the verification results to stdout
+
 ## Design goals and principles
 
 * A user should be able to follow the flow and steps very clearly.
