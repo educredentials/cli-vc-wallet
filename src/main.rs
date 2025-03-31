@@ -24,8 +24,8 @@ async fn main() {
     // dance in its current form, since our oidc server in current config requires both. We must
     // implement dynamic client registration to get rid of this.
     let client_id = std::env::var("OIDC_CLIENT_ID").expect("OIDC_CLIENT_ID ENV var not set");
-    let client_secret =
-        std::env::var("OIDC_CLIENT_SECRET").expect("OIDC_CLIENT_SECRET ENV var not set");
+    // Set optional client_secret from ENV
+    let client_secret = std::env::var("OIDC_CLIENT_SECRET").map_or(None, |s| Some(s.to_string()));
 
     let pop_keypair = std::env::var("KEYPAIR").expect("KEYPAIR ENV var not set");
     let pop_did = std::env::var("DID").expect("DID ENV var not set");
@@ -82,7 +82,7 @@ async fn main() {
         first_authorization_server,
         redirect_url,
         client_id,
-        Some(client_secret),
+        client_secret,
     )
     .await
     .expect("Could not authenticate and authorize user");
@@ -105,7 +105,9 @@ async fn main() {
     );
     log("Proof", Some(&proof));
     let credential: Credential =
-        fetch_credential(&access_token, &well_known, configuration_id, proof).await.unwrap();
+        fetch_credential(&access_token, &well_known, configuration_id, proof)
+            .await
+            .unwrap();
     log("Credential", Some(&credential));
 }
 

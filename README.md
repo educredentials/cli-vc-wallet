@@ -40,6 +40,21 @@ The wallet is meant as a **tool for develolopers and implementors of verifiable 
 * [ ] Visualize the progress of the flow in a sequence diagram or similar in the terminal.
 * [ ] Determine the issuers capabilities wrt to proof types and algorithms, fail if we can't provide the right proof, and offer cli-options to provide one proof when we support more.
 
+## Persistence
+
+The wallet is stateless, but you might want to store some data, like keys, certificates, JWTs, JWKs or DIDs.
+
+We currently use environment variables to store this data. In future this will be moved to commmandline arguments.
+
+### Env file
+
+You can use the provided .env.template: Copy it to .env and fill in the values. 
+The .env file is ignored by git, so you can safely store your secrets there.
+
+**NOTE:** We do not load the .env file automatically, you have to do that yourself. Use
+e.g. [zenv](https://github.com/numToStr/zenv) or any runner that can load .env
+files.
+
 ### Keys, Certificates, JWT, JWK and DID.
 
 When retrieving a Verifiable Credential, the wallet will provide a Proof of Possession and key
