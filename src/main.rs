@@ -4,7 +4,6 @@ use url::Url;
 
 use tokio;
 
-mod cli;
 mod credential;
 mod jwt;
 mod offer;
@@ -21,11 +20,15 @@ use well_known::{get_from, CredentialIssuerMetadata};
 async fn main() {
     env_logger::init();
     // client_id and client_secret from ENV
+    // TODO: Normally wallets don't have client_id and client_secret, but we need it for the OIDC
+    // dance in its current form, since our oidc server in current config requires both. We must
+    // implement dynamic client registration to get rid of this.
     let client_id = std::env::var("OIDC_CLIENT_ID").expect("OIDC_CLIENT_ID ENV var not set");
     let client_secret =
         std::env::var("OIDC_CLIENT_SECRET").expect("OIDC_CLIENT_SECRET ENV var not set");
-    let private_key = std::env::var("PRIVATE_KEY").expect("PRIVATE_KEY ENV var not set");
-    let x509_cert = std::env::var("X509_DER_CERT_BASE46").expect("X509_DER_CERT_BASE46 ENV var not set");
+
+    let pop_keypair = std::env::var("KEYPAIR").expect("KEYPAIR ENV var not set");
+    let pop_did = std::env::var("DID").expect("DID ENV var not set");
 
     // Read the offer from STDIN
     let mut offer_input = String::new();
@@ -95,7 +98,7 @@ async fn main() {
     }
 
     // build our proof
-    let jwt_key = JwtProof::new(&private_key, &x509_cert, "cli-vc-wallet");
+    let jwt_key = JwtProof::new(&pop_keypair, &pop_did);
     let proof = jwt_key.create_jwt(
         &well_known.credential_issuer,
         jwt::current_timestamp(),
