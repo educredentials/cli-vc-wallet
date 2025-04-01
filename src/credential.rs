@@ -11,10 +11,13 @@ pub struct CredentialRequest {
     format: String,
     credential_configuration_id: String,
     proof: Option<Proof>,
+    issuer_state: Option<String>,
+    #[serde(rename = "type")] 
+    credential_type: Vec<String>,
 }
 
 impl CredentialRequest {
-    pub fn new(credential_configuration_id: String, jwt_proof: String) -> Self {
+    pub fn new(credential_configuration_id: String, jwt_proof: String, issuer_state: Option<String>) -> Self {
         let proof = Some(Proof {
             proof_type: "jwt".to_string(),
             jwt: Some(jwt_proof),
@@ -23,6 +26,8 @@ impl CredentialRequest {
             format: "jwt_vc_json".to_string(),
             credential_configuration_id,
             proof,
+            issuer_state,
+            credential_type: vec!["VerifiableCredential".to_string()],
         }
     }
 }

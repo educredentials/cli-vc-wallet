@@ -35,6 +35,26 @@ pub struct CredentialOffer {
     pub credential_configuration_ids: Vec<String>,
 }
 
+// #[derive(Deserialize, Debug)]
+// pub struct Grants {
+//     #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
+//     pub pre_authorized_code: PreAuthorizedCode,
+//
+//     #[serde(rename = "authorization_code")]
+//     pub authorization_code: AuthorizationCode,
+// }
+//
+// #[derive(Deserialize, Debug)]
+// pub struct PreAuthorizedCode {
+//     pub pre_authorized_code: String,
+// }
+//
+// #[derive(Deserialize, Debug)]
+// pub struct AuthorizationCode {
+//     pub authorization_code: String,
+// }
+
+
 #[cfg(test)]
 mod tests {
     use super::*;

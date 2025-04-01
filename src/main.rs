@@ -117,7 +117,7 @@ async fn fetch_credential(
     configuration_id: String,
     proof: String,
 ) -> Result<Credential, CredentialError> {
-    let credentialrequest = CredentialRequest::new(configuration_id, proof);
+    let credentialrequest = CredentialRequest::new(configuration_id, proof, Some("auth-1337".to_string()));
 
     let body =
         serde_json::to_string(&credentialrequest).expect("Could not serialize CredentialRequest");
