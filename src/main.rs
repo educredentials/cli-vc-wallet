@@ -78,7 +78,7 @@ async fn main() {
     );
 
     let redirect_url = Url::parse("http://localhost:8000").unwrap();
-    let (access_token, nonce) = do_the_dance(
+    let (access_token, _nonce) = do_the_dance(
         first_authorization_server,
         redirect_url,
         client_id,
@@ -101,7 +101,7 @@ async fn main() {
     let proof = jwt_key.create_jwt(
         &well_known.credential_issuer,
         jwt::current_timestamp(),
-        nonce.secret(),
+        None,
     );
     log("Proof", Some(&proof));
     let credential: Credential =

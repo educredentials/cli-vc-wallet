@@ -35,13 +35,13 @@ impl JwtProof {
         }
     }
 
-    pub fn create_jwt(&self, audience: &str, issued_at: u64, nonce: &str) -> String {
+    pub fn create_jwt(&self, audience: &str, issued_at: u64, nonce: Option<String>) -> String {
         let claims = Claims {
             iss: self.issuer_id.clone(),
             aud: audience.to_string(),
             iat: issued_at,
             exp: issued_at + 3600,
-            nonce: Some(nonce.to_string()),
+            nonce
         };
 
         // We are using ECDSA with SHA-256, because this seems the only one that is supported by
