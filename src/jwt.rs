@@ -28,12 +28,6 @@ impl JwtProof {
         let encoding_key =
             EncodingKey::from_ec_pem(key_material.as_bytes()).expect("Key creation failed");
 
-        // // Remove PEM headers and footers and join the lines
-        // let x509_cert = x509_cert
-        //     .lines()
-        //     .filter(|line| !line.starts_with("-----"))
-        //     .collect::<Vec<&str>>()
-        //     .join("");
 
         Self {
             issuer_id: Some(did.to_string()),
