@@ -77,6 +77,11 @@ Planned commands are:
 * [ ] Determine wether we have an authorized code flow or a pre-authorized flow.
 * [ ] Visualize the progress of the flow in a sequence diagram or similar in the terminal.
 * [ ] Determine the issuers capabilities wrt to proof types and algorithms, fail if we can't provide the right proof, and offer cli-options to provide one proof when we support more.
+* [ ] [Deferred Credential Requests](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-deferred-credential-respons)
+- [ ] [Encrypted Credential Responses](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8.2-16)
+- [ ] Implement VCs using JSON-LD
+- [ ] Implement VCs using ISO mDL
+- [ ] Implement VCs using IETF SD-JWT VC
 
 ## Persistence
 

@@ -90,6 +90,9 @@ async fn main() {
     log("Access Token", Some(&access_token.secret()));
 
     let configuration_id;
+    // TODO: Implement user selection of one of the credential_configuration_ids
+    // As per design principles of this tool, we should not be making any decisions on behalf of
+    // the user.
     if offer.credential_configuration_ids.len() == 1 {
         configuration_id = offer.credential_configuration_ids[0].clone();
     } else {
