@@ -1,5 +1,4 @@
 use jwt::JwtProof;
-use openidconnect::AccessToken;
 use url::Url;
 
 use tokio;
@@ -11,10 +10,10 @@ mod oidc;
 mod redirect_server;
 mod well_known;
 
-use credential::{Credential, CredentialError, CredentialRequest};
+use credential::CredentialRequest;
 use offer::{CredentialOffer, OpenIdCredentialOffer};
 use oidc::do_the_dance;
-use well_known::{get_from, CredentialIssuerMetadata};
+use well_known::get_from;
 
 #[tokio::main]
 async fn main() {
@@ -107,42 +106,22 @@ async fn main() {
         None,
     );
     log("Proof", Some(&proof));
-    let credential: Credential =
-        fetch_credential(&access_token, &well_known, configuration_id, proof)
-            .await
-            .unwrap();
-    log("Credential", Some(&credential));
-}
+    let credential_endpoint = Url::parse(&well_known.credential_endpoint).unwrap();
+    let credential_request = CredentialRequest::new(
+        credential_endpoint,
+        configuration_id,
+        proof,
+        Some("auth-1337".to_string()),
+        Some(access_token),
+    );
 
-async fn fetch_credential(
-    access_token: &AccessToken,
-    well_known: &CredentialIssuerMetadata, // TODO: do we need the entire well_known here or just the credential_endpoint?
-    configuration_id: String,
-    proof: String,
-) -> Result<Credential, CredentialError> {
-    let credentialrequest = CredentialRequest::new(configuration_id, proof, Some("auth-1337".to_string()));
-
-    let body =
-        serde_json::to_string(&credentialrequest).expect("Could not serialize CredentialRequest");
-
-    let client = reqwest::ClientBuilder::new()
-        .connection_verbose(true)
-        .build()
-        .expect("Could not create client");
-
-    let response = client
-        .post(&well_known.credential_endpoint)
-        .header("Authorization", format!("Bearer {}", access_token.secret()))
-        .header("Content-Type", "application/json")
-        .body(body)
-        .send()
-        .await
-        .expect("Could not send request");
-
-    log("Response", Some(&response));
-    // TODO: Check the response status and return an error if it's not 200
-    // TODO: Deserialize the response into a Credential
-    Ok(Credential {})
+    let credential_response = credential_request.execute().await.unwrap();
+    log("Credential Response", Some(&credential_response));
+    if let Some(credentials) = credential_response.credentials {
+        credentials.iter().for_each(|credential| {
+            log("Credential", Some(credential));
+        });
+    }
 }
 
 // Helper function to log a message and an optional value
