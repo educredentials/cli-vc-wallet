@@ -8,6 +8,7 @@ pub fn http_client() -> Result<reqwest::Client, reqwest::Error> {
     return reqwest::ClientBuilder::new()
             .redirect(reqwest::redirect::Policy::none())
             .user_agent(APP_USER_AGENT)
+            .danger_accept_invalid_certs(true)
             .connection_verbose(true)
             .build();
 }

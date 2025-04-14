@@ -10,8 +10,8 @@ use url::Url;
 pub use openidconnect::AccessToken;
 
 use crate::http_client::http_client;
-use crate::log;
 use crate::redirect_server::start_redirect_server;
+use crate::output::{logger, Output};
 
 pub async fn do_the_dance(
     base_url: Url,
@@ -20,6 +20,7 @@ pub async fn do_the_dance(
     client_secret: Option<String>,
 ) -> Result<(AccessToken, Nonce), anyhow::Error> {
     let http_client = http_client()?;
+    let logger = logger();
 
     // Use OpenID Connect Discovery to fetch the provider metadata.
     // normalize the URL by ensuring there is no trailing slash
@@ -53,23 +54,22 @@ pub async fn do_the_dance(
         .set_pkce_challenge(pkce_challenge) // Set the PKCE code challenge.
         .url();
 
-    println!("Open the following url in your browser: {}", auth_url);
+    logger.attn("Open the following URL in a browser:", auth_url.as_str());
 
     let token = start_redirect_server().await;
 
-    log("Received authorization code:", Some(&token));
+    logger.debug("Received authorization code:", Some(&token));
 
     // Now you can exchange it for an access token and ID token.
     let exchange_client = client
         .exchange_code(AuthorizationCode::new(token.to_string()))?
         .set_pkce_verifier(pkce_verifier);
-    println!("Exchanging code for token at {:?}", client.token_uri());
+    logger.info("Exchanging code for token at {:?}", client.token_uri());
 
     let token_response = exchange_client.request_async(&http_client).await?;
-    println!(
-        "Recieved access token of type: {:?}, and the value is {:?}",
-        token_response.token_type(),
-        token_response.access_token().secret()
+    logger.info(
+        "Received token response",
+        Some(&token_response.access_token().secret()),
     );
 
     // Extract the ID token claims after verifying its authenticity and nonce.
@@ -92,15 +92,9 @@ pub async fn do_the_dance(
         }
     }
 
-    println!(
-        "User {} with e-mail address {} has authenticated successfully for {:?}",
-        claims.subject().as_str(),
-        claims
-            .email()
-            .map(|email| email.as_str())
-            .unwrap_or("<not provided>"),
-        claims.audiences(),
-    );
+    logger.debug("User has authenticated", Some(&claims.subject().as_str()));
+    logger.debug("User has authenticated with email", Some(&claims.email()));
+    logger.debug("User has authenticated for", Some(&claims.audiences()));
 
     Ok((token_response.access_token().clone(), nonce.clone()))
 }
