@@ -4,6 +4,7 @@ use url::Url;
 use tokio;
 
 mod credential;
+mod http_client;
 mod jwt;
 mod offer;
 mod oidc;

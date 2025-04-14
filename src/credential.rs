@@ -3,6 +3,8 @@ use openidconnect::AccessToken;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::http_client::http_client;
+
 #[derive(Deserialize, Debug)]
 pub struct CredentialResponse {
     pub credentials: Option<Vec<String>>,
@@ -72,10 +74,7 @@ impl CredentialRequest {
             jwt: Some(jwt_proof),
         });
 
-        let client = reqwest::ClientBuilder::new()
-            .connection_verbose(true)
-            .build()
-            .expect("Could not create client");
+        let client = http_client().expect("Could not create HTTP client");
 
         Self {
             credential_endpoint,

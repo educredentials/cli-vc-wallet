@@ -1,14 +1,15 @@
 use anyhow::anyhow;
 use openidconnect::core::{CoreAuthenticationFlow, CoreClient, CoreProviderMetadata};
 use openidconnect::{
-    reqwest, AccessTokenHash, AuthorizationCode, ClientId, ClientSecret, CsrfToken, IssuerUrl,
-    Nonce, OAuth2TokenResponse, PkceCodeChallenge, RedirectUrl, Scope, TokenResponse,
+    AccessTokenHash, AuthorizationCode, ClientId, ClientSecret, CsrfToken, IssuerUrl, Nonce,
+    OAuth2TokenResponse, PkceCodeChallenge, RedirectUrl, Scope, TokenResponse,
 };
 use url::Url;
 
 // Re-exports
 pub use openidconnect::AccessToken;
 
+use crate::http_client::http_client;
 use crate::log;
 use crate::redirect_server::start_redirect_server;
 
@@ -18,12 +19,7 @@ pub async fn do_the_dance(
     client_id: String,
     client_secret: Option<String>,
 ) -> Result<(AccessToken, Nonce), anyhow::Error> {
-    let http_client = reqwest::ClientBuilder::new()
-        // Following redirects opens the client up to SSRF vulnerabilities.
-        .redirect(reqwest::redirect::Policy::none())
-        .connection_verbose(true)
-        .build()
-        .expect("Client should build");
+    let http_client = http_client()?;
 
     // Use OpenID Connect Discovery to fetch the provider metadata.
     // normalize the URL by ensuring there is no trailing slash
