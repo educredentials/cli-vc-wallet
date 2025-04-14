@@ -23,7 +23,3 @@ url = { features = ["serde"], version = "2.5.4" }
 [[bin]]
 name = "cli-vc-wallet"
 path = "src/main.rs"
-
-[[bin]]
-name = "jwt-tools"
-path = "src/jwt-tools.rs"

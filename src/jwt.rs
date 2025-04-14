@@ -104,7 +104,7 @@ mod tests {
         let nonce = "nonce123";
 
         let jwt_proof = JwtProof::new(RAW_JWK, issuer_id);
-        let jwt = jwt_proof.create_jwt(audience, issued_at, nonce);
+        let jwt = jwt_proof.create_jwt(audience, issued_at, Some(nonce.to_string()));
 
         assert!(!jwt.is_empty());
     }
@@ -116,7 +116,7 @@ mod tests {
         let issued_at = current_timestamp();
         let nonce = "nonce123";
         let jwt_proof = JwtProof::new(RAW_JWK, issuer_id);
-        let jwt = jwt_proof.create_jwt(audience, issued_at, nonce);
+        let jwt = jwt_proof.create_jwt(audience, issued_at, Some(nonce.to_string()));
 
         let native_key: jwk::Key = serde_json::from_str(RAW_JWK).expect("JSON conversion failed");
         let key = native_key.to_decoding_key();
