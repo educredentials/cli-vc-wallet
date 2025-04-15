@@ -10,8 +10,8 @@ use url::Url;
 pub use openidconnect::AccessToken;
 
 use crate::http_client::http_client;
+use crate::output::{attn, debug, info};
 use crate::redirect_server::start_redirect_server;
-use crate::output::{logger, Output};
 
 pub async fn do_the_dance(
     base_url: Url,
@@ -20,7 +20,6 @@ pub async fn do_the_dance(
     client_secret: Option<String>,
 ) -> Result<(AccessToken, Nonce), anyhow::Error> {
     let http_client = http_client()?;
-    let logger = logger();
 
     // Use OpenID Connect Discovery to fetch the provider metadata.
     // normalize the URL by ensuring there is no trailing slash
@@ -54,20 +53,20 @@ pub async fn do_the_dance(
         .set_pkce_challenge(pkce_challenge) // Set the PKCE code challenge.
         .url();
 
-    logger.attn("Open the following URL in a browser:", auth_url.as_str());
+    attn("Open the following URL in a browser:", auth_url.as_str());
 
     let token = start_redirect_server().await;
 
-    logger.debug("Received authorization code:", Some(&token));
+    debug("Received authorization code:", Some(&token));
 
     // Now you can exchange it for an access token and ID token.
     let exchange_client = client
         .exchange_code(AuthorizationCode::new(token.to_string()))?
         .set_pkce_verifier(pkce_verifier);
-    logger.info("Exchanging code for token at {:?}", client.token_uri());
+    info("Exchanging code for token at {:?}", client.token_uri());
 
     let token_response = exchange_client.request_async(&http_client).await?;
-    logger.info(
+    info(
         "Received token response",
         Some(&token_response.access_token().secret()),
     );
@@ -92,9 +91,9 @@ pub async fn do_the_dance(
         }
     }
 
-    logger.debug("User has authenticated", Some(&claims.subject().as_str()));
-    logger.debug("User has authenticated with email", Some(&claims.email()));
-    logger.debug("User has authenticated for", Some(&claims.audiences()));
+    debug("User has authenticated", Some(&claims.subject().as_str()));
+    debug("User has authenticated with email", Some(&claims.email()));
+    debug("User has authenticated for", Some(&claims.audiences()));
 
     Ok((token_response.access_token().clone(), nonce.clone()))
 }

@@ -1,28 +1,12 @@
 use core::fmt;
 use std::fmt::{Debug, Display, Formatter};
 
-use lazy_static::lazy_static;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use console::style;
-
-pub trait Output<T: Debug> {
-    fn info(&self, message: &str, value: Option<&T>);
-    fn error(&self, message: &str);
-    fn debug(&self, message: &str, value: Option<&T>);
-}
+use serde::Serialize;
 
 static LINE_NUMBER: AtomicUsize = AtomicUsize::new(0);
-
-lazy_static! {
-    static ref LOGGER: ConsoleOutput = ConsoleOutput::new();
-}
-
-pub fn logger() -> &'static ConsoleOutput {
-    &LOGGER
-}
-
-pub struct ConsoleOutput {}
 
 enum ConsoleType {
     Info,
@@ -41,94 +25,78 @@ impl Display for ConsoleType {
     }
 }
 
-impl ConsoleOutput {
-    pub fn new() -> Self {
-        Self {}
-    }
+fn line_prefix(message_type: ConsoleType) -> String {
+    let line_number = LINE_NUMBER.fetch_add(1, Ordering::SeqCst) + 1;
+    let separator = "│";
 
-    fn line_prefix(&self, message_type: ConsoleType) -> String {
-        let line_number = LINE_NUMBER.fetch_add(1, Ordering::SeqCst) + 1;
-        let separator = "│";
+    return format!(
+        "{} {:>3} {}",
+        style(message_type).dim(),
+        style(line_number).dim(),
+        style(separator).dim(),
+    );
+}
 
-        return format!(
-            "{} {:>3} {}",
-            style(message_type).dim(),
-            style(line_number).dim(),
-            style(separator).dim(),
-        );
-    }
-    fn blank_prefix(&self) -> String {
-        return " ".repeat(8);
-    }
+fn blank_prefix() -> String {
+    return " ".repeat(8);
+}
 
-    pub fn attn(&self, title: &str, message: &str) {
-        println!(
-            "\n{} {}\n{} {}",
-            self.line_prefix(ConsoleType::Info),
-            style(title).bold(),
-            self.blank_prefix(),
-            message
-        );
+pub fn attn(title: &str, message: &str) {
+    eprintln!(
+        "\n{} {}\n{} {}",
+        line_prefix(ConsoleType::Info),
+        style(title).bold(),
+        blank_prefix(),
+        message
+    );
+}
+
+pub fn info<T: Display>(message: &str, value: Option<&T>) {
+    match value {
+        Some(v) => eprintln!("{} {}: {}", line_prefix(ConsoleType::Info), message, v),
+        None => eprintln!("{} {}", line_prefix(ConsoleType::Info), message),
     }
 }
 
-impl<T: Debug> Output<T> for ConsoleOutput {
-    fn info(&self, message: &str, value: Option<&T>) {
-        match value {
-            Some(v) => println!(
-                "{} {}: {:?}",
-                self.line_prefix(ConsoleType::Info),
-                message,
-                v
-            ),
-            None => println!("{} {}", self.line_prefix(ConsoleType::Info), message),
-        }
-    }
+pub fn error(message: &str) {
+    eprintln!("{} {}", line_prefix(ConsoleType::Error), message);
+}
 
-    fn error(&self, message: &str) {
-        eprintln!("{} {}", self.line_prefix(ConsoleType::Error), message);
-    }
+pub fn debug<T: Debug>(message: &str, value: Option<&T>) {
+    // TODO: Filter debug unless the DEBUG environment variable is set or logging set to debug
 
-    fn debug(&self, message: &str, value: Option<&T>) {
-        // TODO: Filter debug unless the DEBUG environment variable is set or logging set to debug
-
-        match value {
-            Some(v) => println!(
-                "{} {}: {:#?}",
-                self.line_prefix(ConsoleType::Debug),
-                message,
-                v
-            ),
-            None => println!("{} {}", self.line_prefix(ConsoleType::Debug), message),
-        }
+    match value {
+        Some(v) => eprintln!("{} {}: {:#?}", line_prefix(ConsoleType::Debug), message, v,),
+        None => eprintln!("{} {}", line_prefix(ConsoleType::Debug), message),
     }
 }
 
-pub trait LogExpect<T, E: Debug> {
+pub fn stdout<T: Serialize>(value: T) {
+    println!("{}", serde_json::to_string_pretty(&value).unwrap());
+}
+
+pub trait LogExpect<T> {
     fn log_expect(self, msg: &str) -> T;
 }
 
-impl<T: Debug, E: Debug> LogExpect<T, E> for Result<T, E> {
+impl<T, E: Debug> LogExpect<T> for Result<T, E> {
     fn log_expect(self, msg: &str) -> T {
         match self {
             Ok(value) => value,
             Err(err) => {
-                <ConsoleOutput as Output<T>>::error(
-                    logger(),
-                    format!("{}: {:?}", msg, err).as_str(),
-                );
+                error(format!("{}: {:?}", msg, err).as_str());
                 panic!("Exited due to error");
             }
         }
     }
 }
 
-impl<T: Debug> LogExpect<T, T> for Option<T> {
+impl<T> LogExpect<T> for Option<T> {
     fn log_expect(self, msg: &str) -> T {
         match self {
             Some(value) => value,
             None => {
-                <ConsoleOutput as Output<T>>::error(logger(), msg);
+                error(msg);
                 panic!("Exited due to unexpected empty value");
             }
         }

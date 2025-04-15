@@ -2,10 +2,10 @@ use core::fmt;
 
 use crate::http_client::http_client;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use url::Url;
 
-pub async fn get_from(base_url: String) -> Result<CredentialIssuerMetadata, FetchError> {
+pub async fn get_from(base_url: &String) -> Result<CredentialIssuerMetadata, FetchError> {
     let client = http_client()?;
     let well_known_url = format!("{}/.well-known/openid-credential-issuer", base_url);
     let response = client.get(well_known_url).send().await?;
@@ -39,7 +39,7 @@ impl From<serde_json::Error> for FetchError {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CredentialIssuerMetadata {
     pub credential_issuer: String,
     pub credential_endpoint: String,
