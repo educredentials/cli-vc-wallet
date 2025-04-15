@@ -12,23 +12,24 @@ through the happy path, we will split it up into smaller commands.
 Planned commands are:
 
 - [ ] `vc-wallet offer` - given a credential offer, resolves it if necessary, and prints a normalized offer to stdout. Amongst the information is:
-   - [ ] Whether the offer is by value or by reference
+   - [x] Whether the offer is by value or by reference
    - [ ] Whether the credential request goes via the Authorization Code Flow or is pre-authorized
    - [ ] Any potential pre-shared secrets, or requirement thereof
    - [ ] The credential type, types or credentials in the offer
-- [ ] `vc-wallet authorize` - given a normalized offer, starts an authorization code flow via the openid connect protocol. It will:
-   - [ ] print the authorization URL to stdout
-   - [ ] start a local webserver to receive the callback
-   - [ ] exchange the authorization code for an access token
-   - [ ] print the resulting access token to stdout on success
-   - [ ] print the error to stderr on failure
+   - [x] It returns the issuer url
 - [ ] `vc-wallet issuer` - given a normalized offer, or an issuer URL, requests issuer metadata and shows
    - [ ] possible Proof types and algorithms the issuer supports
-   - [ ] issuers' authorization server if set
+   - [x] issuers' authorization server if set
    - [ ] issuers' endpoint
    - [ ] issuers' DID
    - [ ] issuers' public key(s)
    - [ ] issuers' supported credential types.
+- [ ] `vc-wallet authorize` - given a the url of the authorization server,
+   - [x] print the authorization URL to stdout
+   - [x] start a local webserver to receive the callback
+   - [x] exchange the authorization code for an access token
+   - [x] print the resulting access token to stdout on success
+   - [x] print the error to stderr on failure
 - [ ] `vc-wallet request` - given a normalized offer and one of below, requests the credential from the issuer
    - [ ] EITHER an access token,
    - [ ] OR a pre-shared secret
