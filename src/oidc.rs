@@ -16,8 +16,8 @@ use crate::redirect_server::start_redirect_server;
 pub async fn do_the_dance(
     base_url: Url,
     redirect_url: Url,
-    client_id: String,
-    client_secret: Option<String>,
+    client_id: &String,
+    client_secret: Option<&String>,
 ) -> Result<(AccessToken, Nonce), anyhow::Error> {
     let http_client = http_client()?;
 
@@ -32,8 +32,8 @@ pub async fn do_the_dance(
     // and token URL.
     let client = CoreClient::from_provider_metadata(
         provider_metadata,
-        ClientId::new(client_id),
-        client_secret.map(|client_secret| ClientSecret::new(client_secret)),
+        ClientId::new(client_id.to_string()),
+        client_secret.map(|client_secret| ClientSecret::new(client_secret.to_string())),
     )
     // Set the URL the user will be redirected to after the authorization process.
     .set_redirect_uri(RedirectUrl::new(redirect_url.to_string())?);

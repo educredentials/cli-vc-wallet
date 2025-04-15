@@ -57,21 +57,36 @@ async fn main() {
             debug("Credential Offer", Some(&offer));
             stdout(&offer);
         }
-        Commands::Authorize { credential_issuer } => {
-            // client_id and client_secret from ENV
+        Commands::Authorize {
+            url,
+            client_id,
+            client_secret,
+            redirect_url,
+        } => {
+            info("Starting Authorization Flow", Some(&url));
             // TODO: Normally wallets don't have client_id and client_secret, but we need it for the OIDC
             // dance in its current form, since our oidc server in current config requires both. We must
             // implement dynamic client registration to get rid of this.
-            let client_id =
-                std::env::var("OIDC_CLIENT_ID").log_expect("OIDC_CLIENT_ID ENV var not set");
-            // Set optional client_secret from ENV
-            let client_secret =
-                std::env::var("OIDC_CLIENT_SECRET").map_or(None, |s| Some(s.to_string()));
-            info(
-                "Getting Server Metadata for issuer",
-                Some(&credential_issuer),
-            );
-            let well_known = get_from(credential_issuer).await.unwrap();
+            let url = Url::parse(url).log_expect("Invalid URL");
+            debug("Authorization URL", Some(&url));
+
+            let redirect_url = redirect_url
+                .as_ref()
+                .map_or("http://localhost:8080/", |r| r.as_str());
+
+            let redirect_url = Url::parse(&redirect_url).unwrap();
+            debug("Redirect URL", Some(&redirect_url));
+
+            let (access_token, _nonce) =
+                do_the_dance(url, redirect_url, client_id, client_secret.as_ref())
+                    .await
+                    .log_expect("Could not authenticate and authorize user");
+
+            debug("Access Token", Some(&access_token.secret()));
+        }
+        Commands::Issuer { url } => {
+            info("Getting Server Metadata for issuer", Some(&url));
+            let well_known = get_from(url).await.unwrap();
             debug("Credential Issuer Metadata", Some(&well_known));
             let first_authorization_server = well_known
                 .first_authorization_server()
@@ -81,22 +96,7 @@ async fn main() {
                 "First Authorization Server",
                 Some(&first_authorization_server.to_string()),
             );
-
-            let redirect_url = Url::parse("http://localhost:8000").unwrap();
-            let (access_token, _nonce) = do_the_dance(
-                first_authorization_server,
-                redirect_url,
-                client_id,
-                client_secret,
-            )
-            .await
-            .log_expect("Could not authenticate and authorize user");
-
-            debug("Access Token", Some(&access_token.secret()));
-        }
-        Commands::Issuer { url } => {
-            println!("Fetching issuer metadata from: {}", url);
-            // TODO: Implement issuer metadata retrieval
+            stdout(&well_known);
         }
         Commands::Request {
             configuration_id,

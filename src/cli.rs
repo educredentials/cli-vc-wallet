@@ -36,8 +36,16 @@ pub enum Commands {
     /// - Print errors to stderr on failure
     #[command(verbatim_doc_comment)]
     Authorize {
-        #[arg(value_name = "NORMALIZED_OFFER")]
-        credential_issuer: String,
+        #[arg(short, long, value_name = "AUTHORZATION_URL")]
+        url: MaybeStdin<String>,
+        #[arg(short, long, value_name = "OIDC_CLIENT_ID")]
+        client_id: String,
+        #[arg(long, value_name = "OIDC_CLIENT_SECRET")]
+        client_secret: Option<String>,
+        /// The redirect URL to use for authorization. If not provided, defaults to
+        /// "http://localhost:8080/"
+        #[arg(short, long, value_name = "REDIRECT_URL")]
+        redirect_url: Option<String>,
     },
 
     /// Retrieve and display issuer metadata
@@ -51,8 +59,8 @@ pub enum Commands {
     /// - Supported credential types
     #[command(verbatim_doc_comment)]
     Issuer {
-        #[arg(value_name = "ISSUER_URL")]
-        url: String,
+        #[arg(short, long, value_name = "ISSUER_URL")]
+        url: MaybeStdin<String>,
     },
 
     /// Request credential from issuer
