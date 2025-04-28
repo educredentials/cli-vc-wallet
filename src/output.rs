@@ -53,7 +53,12 @@ pub fn attn(title: &str, message: &str) {
 
 pub fn info<T: Display>(message: &str, value: Option<&T>) {
     match value {
-        Some(v) => eprintln!("{} {}: {}", line_prefix(ConsoleType::Info), message, v),
+        Some(v) => eprintln!(
+            "{} {}: {}",
+            line_prefix(ConsoleType::Info),
+            message,
+            style(v).bold()
+        ),
         None => eprintln!("{} {}", line_prefix(ConsoleType::Info), message),
     }
 }
