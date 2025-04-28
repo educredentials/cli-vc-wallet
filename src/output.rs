@@ -63,7 +63,9 @@ pub fn error(message: &str) {
 }
 
 pub fn debug<T: Debug>(message: &str, value: Option<&T>) {
-    // TODO: Filter debug unless the DEBUG environment variable is set or logging set to debug
+    if std::env::var("DEBUG").is_err() || std::env::var("DEBUG").unwrap() != "true" {
+        return;
+    }
 
     match value {
         Some(v) => eprintln!("{} {}: {:#?}", line_prefix(ConsoleType::Debug), message, v,),
