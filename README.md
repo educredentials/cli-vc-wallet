@@ -27,6 +27,7 @@ Planned commands are:
 - [ ] `vc-wallet authorize` - given a the url of the authorization server,
    - [x] print the authorization URL to stdout
    - [x] start a local webserver to receive the callback
+   - [ ] Allow the user to choose the callback url with host, port and path that the listener will bind to
    - [x] exchange the authorization code for an access token
    - [x] print the resulting access token to stdout on success
    - [x] print the error to stderr on failure
@@ -42,6 +43,12 @@ Planned commands are:
    - [ ] verify the proof
    - [ ] verify the credential
    - [ ] print the verification results to stdout
+
+- [ ] `vc-wallet interactive` - given only a credential offer, walk the user through the entire flow.
+   - [ ] On each step, show the user what has been resolved, which calls were made, 
+   - [ ] what the next step will be with a prompt to continue or abort.
+   - [ ] For each step, ask the user what values and choices they must provide.
+   - [ ] Show the user the contents of the final credential and the proof.
 
 ## Design goals and principles
 
