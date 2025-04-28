@@ -62,6 +62,18 @@ pub fn info<T: Display>(message: &str, value: Option<&T>) {
         None => eprintln!("{} {}", line_prefix(ConsoleType::Info), message),
     }
 }
+pub fn sub_info<T: Display>(message: &str, value: Option<&T>, level: usize) {
+    match value {
+        Some(v) => eprintln!(
+            "{} |{} {}: {}",
+            line_prefix(ConsoleType::Info),
+            "-".repeat(level),
+            message,
+            style(v).bold()
+        ),
+        None => eprintln!("{} {}", blank_prefix(), message),
+    }
+}
 
 pub fn error(message: &str) {
     eprintln!("{} {}", line_prefix(ConsoleType::Error), message);

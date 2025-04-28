@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug)]
@@ -19,6 +21,34 @@ impl OpenIdCredentialOffer {
         Ok(())
     }
 
+    pub fn credential_flow(&self) -> Result<CredentialOfferFlow, String> {
+        let grants = self
+            .credential_offer()
+            .expect("TODO: can only work on by_value for now")
+            .grants
+            .expect("No grants present. TODO: fetch from issuer metadata instead");
+
+        // TODO: If grants is not present or is empty, the Wallet MUST determine the Grant Types the
+        // Credential Issuer's Authorization Server supports using the respective metadata. When multiple
+        // grants are present, it is at the Wallet's discretion which one to use.
+        if grants.pre_authorized_code.is_none() && grants.authorization_code.is_none() {
+            return Err(
+                "Neither pre_authorized_code nor authorization_code is present".to_string(),
+            );
+        }
+        if grants.pre_authorized_code.is_some() && grants.authorization_code.is_some() {
+            return Err("Both pre_authorized_code and authorization_code are present".to_string());
+        }
+
+        if let Some(_) = grants.pre_authorized_code {
+            return Ok(CredentialOfferFlow::PreAuthorizedCodeFlow);
+        } else if let Some(_) = grants.authorization_code {
+            return Ok(CredentialOfferFlow::AuthorizationCodeFlow);
+        } else {
+            return Err("No valid grant type found".to_string());
+        }
+    }
+
     pub fn is_by_value(&self) -> bool {
         self.credential_offer.is_some()
     }
@@ -29,31 +59,61 @@ impl OpenIdCredentialOffer {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, PartialEq)]
+pub enum CredentialOfferFlow {
+    PreAuthorizedCodeFlow,
+    AuthorizationCodeFlow,
+}
+
+impl Display for CredentialOfferFlow {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CredentialOfferFlow::PreAuthorizedCodeFlow => "Pre-authorized code flow".fmt(f),
+            CredentialOfferFlow::AuthorizationCodeFlow => "Authorization code flow".fmt(f),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialOffer {
     pub credential_issuer: String,
     pub credential_configuration_ids: Vec<String>,
+    pub grants: Option<Grants>,
 }
 
-// #[derive(Deserialize, Debug)]
-// pub struct Grants {
-//     #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
-//     pub pre_authorized_code: PreAuthorizedCode,
-//
-//     #[serde(rename = "authorization_code")]
-//     pub authorization_code: AuthorizationCode,
-// }
-//
-// #[derive(Deserialize, Debug)]
-// pub struct PreAuthorizedCode {
-//     pub pre_authorized_code: String,
-// }
-//
-// #[derive(Deserialize, Debug)]
-// pub struct AuthorizationCode {
-//     pub authorization_code: String,
-// }
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Grants {
+    #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
+    pub pre_authorized_code: Option<PreAuthorizedCode>,
 
+    #[serde(rename = "authorization_code")]
+    pub authorization_code: Option<AuthorizationCode>,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct PreAuthorizedCode {
+    #[serde(rename = "pre-authorized_code")]
+    pub pre_authorized_code: String,
+    // TODO: string that the Wallet can use to identify the Authorization Server to use with this
+    // grant type when authorization_servers parameter in the Credential Issuer metadata has
+    // multiple entries. It MUST NOT be used otherwise. The value of this parameter MUST match with
+    // one of the values in the authorization_servers array obtained from the Credential Issuer
+    // metadata.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub authorization_server: Option<String>,
+}
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct AuthorizationCode {
+    pub issuer_state: Option<String>,
+    // TODO: string that the Wallet can use to identify the Authorization Server to use with this
+    // grant type when authorization_servers parameter in the Credential Issuer metadata has
+    // multiple entries. It MUST NOT be used otherwise. The value of this parameter MUST match with
+    // one of the values in the authorization_servers array obtained from the Credential Issuer
+    // metadata.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub authorization_server: Option<String>,
+}
 
 #[cfg(test)]
 mod tests {
@@ -109,6 +169,20 @@ mod tests {
         assert_eq!(
             openid_credential_offer.validate(),
             Err("Both credential_offer and credential_offer_uri are present".to_string())
+        );
+    }
+
+    #[test]
+    fn deserialize_co_authn_type() {
+        let offer = "openid-credential-offer://?credential_offer=%7B%22credential_issuer%22:%22https://credential-issuer.example.com%22,%22credential_configuration_ids%22:%5B%22org.iso.18013.5.1.mDL%22%5D,%22grants%22:%7B%22urn:ietf:params:oauth:grant-type:pre-authorized_code%22:%7B%22pre-authorized_code%22:%22oaKazRN8I0IbtZ0C7JuMn5%22,%22tx_code%22:%7B%22input_mode%22:%22text%22,%22description%22:%22Please%20enter%20the%20serial%20number%20of%20your%20physical%20drivers%20license%22%7D%7D%7D%7D";
+        let url = Url::parse(offer).expect("Could not parse URL");
+        let query = url.query().expect("No query parameters in offer URI");
+        let openid_credential_offer: OpenIdCredentialOffer =
+            serde_qs::from_str(query).expect("Could not deserialize query parameters");
+
+        assert_eq!(
+            openid_credential_offer.credential_flow().unwrap(),
+            CredentialOfferFlow::PreAuthorizedCodeFlow
         );
     }
 }

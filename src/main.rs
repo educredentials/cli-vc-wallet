@@ -2,7 +2,7 @@ use clap::Parser;
 use cli::{Cli, Commands};
 use jwt::JwtProof;
 use openidconnect::AccessToken;
-use output::{debug, info, stdout, LogExpect};
+use output::{debug, error, info, stdout, sub_info, LogExpect};
 use url::Url;
 
 use tokio;
@@ -15,11 +15,13 @@ mod offer;
 mod oidc;
 mod output;
 mod redirect_server;
+mod verify;
 mod well_known;
 
 use credential::CredentialRequest;
-use offer::{CredentialOffer, OpenIdCredentialOffer};
+use offer::{CredentialOffer, CredentialOfferFlow, OpenIdCredentialOffer};
 use oidc::do_the_dance;
+use verify::header;
 use well_known::get_from;
 
 #[tokio::main]
@@ -42,13 +44,31 @@ async fn main() {
 
             let offer: CredentialOffer;
             if openid_url.is_by_value() {
-                info("Credential Offer is by Value", None::<&String>);
+                info("Credential Offer Type", Some(&"By Value"));
                 offer = openid_url
                     .credential_offer()
                     .log_expect("Invalid Credential Offer");
             } else {
                 info("Credential Offer is by Reference", None::<&String>);
                 todo!("Implement Normalizing the Credential Offer by fetching it");
+            }
+
+            let flow = openid_url
+                .credential_flow()
+                .log_expect("Invalid Credential Flow");
+
+            info("Credential Offer Flow", Some(&flow));
+            let grants = offer.clone().grants.log_expect("No grants found");
+            match flow {
+                CredentialOfferFlow::AuthorizationCodeFlow => {
+                    let state = &grants.authorization_code.unwrap().issuer_state.unwrap();
+                    sub_info("Authorization Code State", Some(&state), 2);
+                }
+                CredentialOfferFlow::PreAuthorizedCodeFlow => {
+                    let pre_authorized_code =
+                        &grants.pre_authorized_code.unwrap().pre_authorized_code;
+                    sub_info("Pre-authorized Code", Some(&pre_authorized_code), 2);
+                }
             }
 
             debug("Credential Offer", Some(&offer));
@@ -106,10 +126,10 @@ async fn main() {
             let pop_keypair = std::env::var("KEYPAIR").log_expect("KEYPAIR ENV var not set");
             let pop_did = std::env::var("DID").log_expect("DID ENV var not set");
 
-            // build our proof
+            // build our proof of Possession
             let jwt_key = JwtProof::new(&pop_keypair, &pop_did);
             let proof = jwt_key.create_jwt(&credential_issuer, jwt::current_timestamp(), None);
-            info("Offering proof", Some(&proof));
+            info("Offering proof of Possession", Some(&proof));
             let credential_endpoint = Url::parse(&credential_endpoint).unwrap();
             let access_token = AccessToken::new(access_token.to_string());
 
@@ -128,11 +148,18 @@ async fn main() {
                     info("Credential", Some(credential));
                 });
             }
-            // TODO: Implement credential request
         }
         Commands::Verify { credential } => {
             println!("Verifying credential: {}", credential);
-            // TODO: Implement verification
+            let jwt_header = header(credential);
+            match jwt_header {
+                Ok(header) => {
+                    debug("Header", Some(&header));
+                }
+                Err(e) => {
+                    error(e.as_str());
+                }
+            }
         }
     }
 }
