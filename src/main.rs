@@ -72,7 +72,7 @@ async fn main() {
 
             let redirect_url = redirect_url
                 .as_ref()
-                .map_or("http://localhost:8080/", |r| r.as_str());
+                .map_or("http://localhost:8000/", |r| r.as_str());
 
             let redirect_url = Url::parse(&redirect_url).unwrap();
             debug("Redirect URL", Some(&redirect_url));
