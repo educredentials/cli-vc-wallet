@@ -28,9 +28,6 @@ async fn main() {
 
     let cli = Cli::parse();
 
-    let t = Some("test");
-    t.log_expect("test");
-
     match &cli.command {
         Commands::Offer { offer } => {
             debug("Processing offer", Some(&offer));
