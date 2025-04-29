@@ -50,6 +50,15 @@ Planned commands are:
    - [ ] For each step, ask the user what values and choices they must provide.
    - [ ] Show the user the contents of the final credential and the proof.
 
+## TODOs
+
+Other TODOs and fixes, aside from the abovementioned commands and features:
+
+- [ ] Move `issuer_state` from Credential Request to Authorization Request.
+- [ ] Make `issuer_state` required *when it is in the offer*.
+- [ ] Move KEYPAIR and DIDKEY to commandline arguments - potentially with
+  reference to a file rather than the value itself. Could default to a known location on disk.
+
 ## Design goals and principles
 
 * A user should be able to follow the flow and steps very clearly.

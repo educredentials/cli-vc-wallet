@@ -7,7 +7,11 @@ use url::Url;
 
 pub async fn get_from(base_url: &String) -> Result<CredentialIssuerMetadata, FetchError> {
     let client = http_client()?;
+
+    // Normalize the base URL by removing any trailing slashes
+    let base_url = base_url.trim_end_matches('/');
     let well_known_url = format!("{}/.well-known/openid-credential-issuer", base_url);
+
     let response = client.get(well_known_url).send().await?;
     Ok(serde_json::from_str(&response.text().await?)?)
 }
