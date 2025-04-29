@@ -104,14 +104,15 @@ async fn main() {
         Commands::Issuer { url } => {
             info("Getting Server Metadata for issuer", Some(&url));
             let well_known = get_from(url).await.unwrap();
-            debug("Credential Issuer Metadata", Some(&well_known));
             let first_authorization_server = well_known
-                .first_authorization_server()
-                .log_expect("No Authorization Servers found");
+                .first_authorization_server().map(|s| s.to_string()).
+                unwrap_or({
+                    "No Authorization Server".to_string()
+                });
 
             info(
                 "First Authorization Server",
-                Some(&first_authorization_server.to_string()),
+                Some(&first_authorization_server),
             );
             stdout(&well_known);
         }
