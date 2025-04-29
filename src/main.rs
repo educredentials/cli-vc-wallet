@@ -119,6 +119,7 @@ async fn main() {
             configuration_id,
             credential_issuer,
             credential_endpoint,
+            issuer_state,
             access_token,
             proof_type: _,
             algorithm: _,
@@ -137,9 +138,10 @@ async fn main() {
                 credential_endpoint,
                 configuration_id.to_string(),
                 proof,
-                Some("auth-1337".to_string()),
+                Some(issuer_state.to_string()),
                 Some(access_token),
             );
+            debug("Credential Request", Some(&credential_request));
 
             let credential_response = credential_request.execute().await.unwrap();
             debug("Credential Response", Some(&credential_response));

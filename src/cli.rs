@@ -76,17 +76,19 @@ pub enum Commands {
     /// - Output credential to stdout
     #[command(verbatim_doc_comment)]
     Request {
-        #[arg(value_name = "CONFIGURATION_ID")]
+        #[arg(short, long, value_name = "CONFIGURATION_ID")]
         configuration_id: String,
-        #[arg(value_name = "CREDENTIAL_ISSUER")]
+        #[arg(short = 'i', long, value_name = "CREDENTIAL_ISSUER")]
         credential_issuer: String,
-        #[arg(value_name = "CREDENTIAL_ENDPOINT")]
+        #[arg(short = 'e', long, value_name = "CREDENTIAL_ENDPOINT")]
         credential_endpoint: String,
-        #[arg(value_name = "ACCESS_TOKEN")]
+        #[arg(short = 's', long, value_name = "ISSUER_STATE")]
+        issuer_state: String,
+        #[arg(short = 't', long, value_name = "ACCESS_TOKEN")]
         access_token: String,
-        #[arg(long, value_name = "PROOF_TYPE")]
+        #[arg(short, long, value_name = "PROOF_TYPE")]
         proof_type: Option<String>,
-        #[arg(long, value_name = "ALGORITHM")]
+        #[arg(short, long, value_name = "ALGORITHM")]
         algorithm: Option<String>,
     },
 
