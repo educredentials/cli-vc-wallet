@@ -58,6 +58,7 @@ Other TODOs and fixes, aside from the abovementioned commands and features:
 - [ ] Make `issuer_state` required *when it is in the offer*.
 - [ ] Move KEYPAIR and DIDKEY to commandline arguments - potentially with
   reference to a file rather than the value itself. Could default to a known location on disk.
+- [ ] Have `issuer-metadata` try several URLS and pick the first one that resolves rather than only .well-known/openid-credential-issuer
 
 ## Design goals and principles
 

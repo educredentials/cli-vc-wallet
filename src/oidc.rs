@@ -50,6 +50,7 @@ pub async fn do_the_dance(
         )
         .add_scope(Scope::new("profile".to_string()))
         .add_scope(Scope::new("email".to_string()))
+        // TODO: add scopes from the issuer-metadata scope for this credential_type
         .set_pkce_challenge(pkce_challenge) // Set the PKCE code challenge.
         .url();
 

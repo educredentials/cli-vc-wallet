@@ -28,7 +28,7 @@ pub struct CredentialResponse {
 //     #[serde(rename = "credentialSubject")]
 //     pub credential_subject: Value,
 // }
-// Could be used with e.g. 
+// Could be used with e.g.
 // println!("Credential");
 // println!("\ttype:        {}", &credential.credential_type);
 // println!("\tid:          {}", &credential.id.as_ref().unwrap_or(&"No ID".to_string()));
