@@ -56,7 +56,7 @@ pub async fn do_the_dance(
 
     attn("Open the following URL in a browser:", auth_url.as_str());
 
-    let token = start_redirect_server().await;
+    let token = start_redirect_server(&redirect_url).await;
 
     debug("Received authorization code:", Some(&token));
 

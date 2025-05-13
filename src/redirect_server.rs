@@ -1,15 +1,16 @@
 use axum::{extract::Query, response::Html, routing::get, Router};
 use std::{
     collections::HashMap,
-    net::SocketAddr,
+    net::ToSocketAddrs,
     sync::{Arc, Mutex},
 };
 use tokio::net::TcpListener;
 use tokio::sync::oneshot;
+use url::Url;
 
 /// Starts a simple HTTP server on localhost:8000 that waits for an OAuth redirect,
 /// extracts the 'code' parameter, and then shuts down.
-pub async fn start_redirect_server() -> String {
+pub async fn start_redirect_server(redirect_url: &Url) -> String {
     // Channel to communicate the code between the handler and this function
     let (tx, rx) = oneshot::channel::<String>();
     let tx = Arc::new(Mutex::new(Some(tx)));
@@ -24,8 +25,18 @@ pub async fn start_redirect_server() -> String {
     );
 
     // Start the server
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8000));
-    let listener = TcpListener::bind(addr).await.expect("Failed to bind to port 8000");
+    let addr = format!(
+        "{}:{}",
+        redirect_url.host_str().unwrap(),
+        redirect_url.port().unwrap()
+    )
+    .to_socket_addrs()
+    .expect("Invalid redirect URL")
+    .next()
+    .expect("No address found");
+    let listener = TcpListener::bind(addr)
+        .await
+        .expect("Failed to bind to address");
 
     // Create a cancellation channel
     let (shutdown_tx, shutdown_rx) = oneshot::channel::<()>();
