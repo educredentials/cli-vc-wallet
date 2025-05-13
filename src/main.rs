@@ -105,10 +105,9 @@ async fn main() {
             info("Getting Server Metadata for issuer", Some(&url));
             let well_known = get_from(url).await.unwrap();
             let first_authorization_server = well_known
-                .first_authorization_server().map(|s| s.to_string()).
-                unwrap_or({
-                    "No Authorization Server".to_string()
-                });
+                .first_authorization_server()
+                .map(|s| s.to_string())
+                .unwrap_or("No Authorization Server".to_string());
 
             info(
                 "First Authorization Server",
@@ -133,14 +132,16 @@ async fn main() {
             let proof = jwt_key.create_jwt(&credential_issuer, jwt::current_timestamp(), None);
             info("Offering proof of Possession", Some(&proof));
             let credential_endpoint = Url::parse(&credential_endpoint).unwrap();
-            let access_token = AccessToken::new(access_token.to_string());
+
+            // Optional Access Token
+            let access_token = access_token.as_ref().map(|s| AccessToken::new(s.to_string()));
 
             let credential_request = CredentialRequest::new(
                 credential_endpoint,
                 configuration_id.to_string(),
                 proof,
-                Some(issuer_state.to_string()),
-                Some(access_token),
+                issuer_state.as_ref().map(|s| s.to_string()),
+                access_token,
             );
             debug("Credential Request", Some(&credential_request));
 
@@ -148,7 +149,10 @@ async fn main() {
             debug("Credential Response", Some(&credential_response));
             if let Some(credentials) = credential_response.credentials {
                 credentials.iter().for_each(|credential| {
-                    info("Credential", Some(credential));
+                    let unpacked_credential = JwtCredential::from_jwt(credential).expect(
+                        "Could not unpack credential",
+                    );
+                    info("Credential", Some(&unpacked_credential.to_string()));
                 });
             }
         }

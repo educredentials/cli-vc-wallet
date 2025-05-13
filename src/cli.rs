@@ -83,9 +83,9 @@ pub enum Commands {
         #[arg(short = 'e', long, value_name = "CREDENTIAL_ENDPOINT")]
         credential_endpoint: String,
         #[arg(short = 's', long, value_name = "ISSUER_STATE")]
-        issuer_state: String,
+        issuer_state: Option<String>,
         #[arg(short = 't', long, value_name = "ACCESS_TOKEN")]
-        access_token: String,
+        access_token: Option<String>,
         #[arg(short, long, value_name = "PROOF_TYPE")]
         proof_type: Option<String>,
         #[arg(short, long, value_name = "ALGORITHM")]

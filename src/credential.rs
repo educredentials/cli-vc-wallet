@@ -1,6 +1,8 @@
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use core::fmt;
 use openidconnect::AccessToken;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use url::Url;
 
 use crate::http_client::http_client;
@@ -45,7 +47,9 @@ pub struct CredentialResponse {
 // TODO: implement "credential_request_encryption"
 #[derive(Serialize, Debug)]
 pub struct CredentialRequest {
+    #[serde(skip)]
     credential_endpoint: Url,
+
     format: String,
     credential_configuration_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -54,7 +58,8 @@ pub struct CredentialRequest {
     issuer_state: Option<String>,
     #[serde(rename = "type")]
     credential_type: Vec<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+
+    #[serde(skip)]
     access_token: Option<AccessToken>,
 
     #[serde(skip)]
