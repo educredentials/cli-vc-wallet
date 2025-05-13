@@ -74,10 +74,11 @@ async fn handle_redirect_callback(
         if let Some(sender) = tx.lock().unwrap().take() {
             let _ = sender.send(code.clone());
         }
+        let success_html = include_str!("redirect_server_success.html");
+        let success_html = success_html.replace("{code}", code);
 
-        Html("<h1>Authorization Successful</h1><p>You can close this window now.</p>".to_string())
+        Html(success_html)
     } else {
         Html("<h1>Error</h1><p>No authorization code provided.</p>".to_string())
     }
 }
-
