@@ -162,3 +162,99 @@ impl From<serde_json::Error> for CredentialError {
         }
     }
 }
+
+pub struct JwtCredential {
+    pub header: serde_json::Value,
+    pub payload: CredentialPayload,
+    pub signature: String,
+}
+
+impl fmt::Display for JwtCredential {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "JwtCredential {{ header: {}, payload: {}, signature: {} }}",
+            self.header, self.payload, self.signature
+        )
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CredentialPayload {
+    pub vc: VerifiableCredential,
+    pub iss: String,
+    pub sub: String,
+}
+
+impl fmt::Display for CredentialPayload {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "CredentialPayload {{ vc: {}, iss: {}, sub: {} }}",
+            self.vc, self.iss, self.sub
+        )
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct VerifiableCredential {
+    pub id: String,
+    pub credential_type: Vec<String>,
+    pub issuer: String,
+    pub credential_subject: Value,
+    pub name: Option<String>,
+    pub description: Option<String>,
+}
+
+impl fmt::Display for VerifiableCredential {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "VerifiableCredential {{ id: {}, credential_type: {:?}, issuer: {}, credential_subject: {:?}, name: {:?}, description: {:?} }}",
+            self.id, self.credential_type, self.issuer, self.credential_subject, self.name, self.description
+        )
+    }
+}
+
+impl JwtCredential {
+    pub fn new(header: serde_json::Value, payload: CredentialPayload, signature: String) -> Self {
+        Self {
+            header,
+            payload,
+            signature,
+        }
+    }
+
+    pub fn from_jwt(jwt: &str) -> Result<Self, CredentialError> {
+        let parts: Vec<&str> = jwt.split('.').collect();
+        if parts.len() != 3 {
+            return Err(CredentialError {
+                message: "Invalid JWT format".to_string(),
+            });
+        }
+
+        let header = URL_SAFE_NO_PAD
+            .decode(parts[0])
+            .map_err(|e| CredentialError {
+                message: format!("Failed to decode header: {}", e),
+            })?;
+        let payload = URL_SAFE_NO_PAD
+            .decode(parts[1])
+            .map_err(|e| CredentialError {
+                message: format!("Failed to decode payload: {}", e),
+            })?;
+        let signature = parts[2].to_string();
+
+        let header_json: serde_json::Value =
+            serde_json::from_slice(&header).map_err(|e| CredentialError {
+                message: format!("Failed to parse header JSON: {}", e),
+            })?;
+
+        let payload_json: CredentialPayload =
+            serde_json::from_slice(&payload).map_err(|e| CredentialError {
+                message: format!("Failed to parse payload JSON: {}", e),
+            })?;
+
+        Ok(Self::new(header_json, payload_json, signature))
+    }
+}

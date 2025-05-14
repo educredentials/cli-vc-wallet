@@ -2,7 +2,7 @@ use clap::Parser;
 use cli::{Cli, Commands};
 use jwt::JwtProof;
 use openidconnect::AccessToken;
-use output::{debug, error, info, stdout, sub_info, LogExpect};
+use output::{debug, info, stdout, sub_info, LogExpect};
 use url::Url;
 
 use tokio;
@@ -18,10 +18,10 @@ mod redirect_server;
 mod verify;
 mod well_known;
 
-use credential::CredentialRequest;
+use credential::{CredentialRequest, JwtCredential};
 use offer::{CredentialOffer, CredentialOfferFlow, OpenIdCredentialOffer};
 use oidc::do_the_dance;
-use verify::header;
+use verify::verify;
 use well_known::get_from;
 
 #[tokio::main]
@@ -158,14 +158,10 @@ async fn main() {
         }
         Commands::Verify { credential } => {
             println!("Verifying credential: {}", credential);
-            let jwt_header = header(credential);
-            match jwt_header {
-                Ok(header) => {
-                    debug("Header", Some(&header));
-                }
-                Err(e) => {
-                    error(e.as_str());
-                }
+            let result = verify(credential);
+            match result {
+                Ok(_) => println!("Credential is valid"),
+                Err(e) => println!("Credential verification failed: {:?}", e),
             }
         }
     }

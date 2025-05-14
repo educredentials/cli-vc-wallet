@@ -1,8 +1,13 @@
-pub fn header(jwt: &str) -> Result<String, String> {
-    let head = jsonwebtoken::decode_header(jwt)
-        .map_err(|e| format!("Failed to decode JWT header: {}", e));
+pub fn verify(_credential: &String) -> Result<(), VerificationError> {
+    todo!("Verification logic is not implemented yet");
+}
 
-    dbg!(&head);
-    
-    return Ok("".to_string());
+#[derive(Debug)]
+pub enum VerificationError {
+    // InvalidSignature,
+    // ExpiredToken,
+    // InvalidIssuer,
+    // InvalidAudience,
+    // InvalidSubject,
+    // MissingClaims,
 }
