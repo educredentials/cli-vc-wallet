@@ -94,6 +94,11 @@ Other TODOs and fixes, aside from the abovementioned commands and features:
 * Do we want to interactivly prompt a user, or rather take commandline arguments?
 * Do we want multiple small that can be piped and if so, how do we deal with
   the more complex flows that would chain together these flows conditionally? Maybe offer both?
+* Do we want to support all possible signing algorithms, and proof types or only the most common ones?
+* Do we want to support all possible flows, or only the most common ones?
+* Do we want to support all possible credential types, or only the most common ones?
+* Do we want to add checks or limations to [High Assurance Interoperability Profile (HAIP)](https://openid.net/specs/openid4vc-high-assurance-interoperability-profile-1_0.html)?
+* Do we want to add checks or limitations to [Decentralized Identity Interoperability Profile (DID)](https://fidescommunity.github.io/DIIP/)
 
 ## TODOs, planned features
 
