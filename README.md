@@ -43,7 +43,13 @@ Planned commands are:
    - [ ] verify the proof
    - [ ] verify the credential
    - [ ] print the verification results to stdout
-
+- [ ] `vc-wallet present` - given a presentation request, shows the user credentials that can be offered
+   - [ ] show the user the presentation request
+   - [ ] show the user the credentials that can be offered from a glob, directory or list of credentials in JSON on disk
+   - [ ] allow the user to pick a credential to offer
+   - [ ] check if the credential can be offered according to the request
+   - [ ] show the user the data that will be sent to the verifier
+   - [ ] send the proof and credential to the verifier
 - [ ] `vc-wallet interactive` - given only a credential offer, walk the user through the entire flow.
    - [ ] On each step, show the user what has been resolved, which calls were made, 
    - [ ] what the next step will be with a prompt to continue or abort.
