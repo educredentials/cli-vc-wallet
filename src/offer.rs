@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 #[derive(Deserialize, Debug)]
 pub struct OpenIdCredentialOffer {
@@ -19,6 +20,14 @@ impl OpenIdCredentialOffer {
             return Err("Both credential_offer and credential_offer_uri are present".to_string());
         }
         Ok(())
+    }
+
+    pub fn from_uri(uri: &str) -> Result<Self, String> {
+        let url = Url::parse(uri).map_err(|e| format!("Could not parse URL: {}", e))?;
+        let query = url
+            .query()
+            .ok_or_else(|| "No query parameters in offer URI".to_string())?;
+        serde_qs::from_str(query).map_err(|e| format!("Invalid OpenID Credential Offer: {}", e))
     }
 
     pub fn credential_flow(&self) -> Result<CredentialOfferFlow, String> {
@@ -81,6 +90,27 @@ pub struct CredentialOffer {
     pub grants: Option<Grants>,
 }
 
+impl CredentialOffer {
+    pub fn get_issuer_state(&self) -> Option<String> {
+        if let Some(grants) = &self.grants {
+            if let Some(authorization_code) = &grants.authorization_code {
+                return authorization_code.issuer_state.clone();
+            }
+        }
+        None
+    }
+}
+
+impl Display for CredentialOffer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "CredentialOffer {{ credential_issuer: {}, credential_configuration_ids: {:?} }}",
+            self.credential_issuer, self.credential_configuration_ids
+        )
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Grants {
     #[serde(rename = "urn:ietf:params:oauth:grant-type:pre-authorized_code")]
@@ -89,7 +119,6 @@ pub struct Grants {
     #[serde(rename = "authorization_code")]
     pub authorization_code: Option<AuthorizationCode>,
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PreAuthorizedCode {

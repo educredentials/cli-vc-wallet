@@ -104,4 +104,15 @@ pub enum Commands {
         #[arg(value_name = "CREDENTIAL")]
         credential: String,
     },
+
+    /// - [ ] `vc-wallet interactive` - given only a credential offer, walk the user through the entire flow.
+    ///  - [ ] On each step, show the user what has been resolved, which calls were made, 
+    ///  - [ ] what the next step will be with a prompt to continue or abort.
+    ///  - [ ] For each step, ask the user what values and choices they must provide.
+    ///  - [ ] Show the user the contents of the final credential and the proof.
+    #[command(verbatim_doc_comment)]
+    Interactive {
+        #[arg(short, long, value_name = "OFFER")]
+        offer: MaybeStdin<String>,
+    },
 }
