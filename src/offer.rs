@@ -111,7 +111,7 @@ impl OpenIdCredentialOffer {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum CredentialOfferFlow {
     PreAuthorizedCodeFlow,
     AuthorizationCodeFlow,
@@ -126,11 +126,20 @@ impl fmt::Display for CredentialOfferFlow {
     }
 }
 
+impl Default for CredentialOfferFlow {
+    fn default() -> Self {
+        CredentialOfferFlow::PreAuthorizedCodeFlow
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialOffer {
     pub credential_issuer: String,
     pub credential_configuration_ids: Vec<String>,
     pub grants: Option<Grants>,
+
+    #[serde(skip)]
+    pub flow: CredentialOfferFlow,
 }
 
 impl CredentialOffer {
@@ -138,6 +147,15 @@ impl CredentialOffer {
         if let Some(grants) = &self.grants {
             if let Some(authorization_code) = &grants.authorization_code {
                 return authorization_code.issuer_state.clone();
+            }
+        }
+        None
+    }
+
+    pub fn get_pre_authorized_code(&self) -> Option<String> {
+        if let Some(grants) = &self.grants {
+            if let Some(pre_authorized_code) = &grants.pre_authorized_code {
+                return Some(pre_authorized_code.pre_authorized_code.clone());
             }
         }
         None

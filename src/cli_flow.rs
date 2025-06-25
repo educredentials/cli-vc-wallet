@@ -5,8 +5,9 @@ use crate::{
 
 pub async fn handle_offer_command(offer: &str) -> CredentialOffer {
     debug("Processing offer", Some(&offer));
-    let openid_url =
-        OpenIdCredentialOffer::new().with_uri(&offer).log_expect("Invalid OpenID Credential Offer");
+    let openid_url = OpenIdCredentialOffer::new()
+        .with_uri(&offer)
+        .log_expect("Invalid OpenID Credential Offer");
 
     openid_url
         .validate()
@@ -30,7 +31,8 @@ pub async fn handle_offer_command(offer: &str) -> CredentialOffer {
         .credential_flow(&offer)
         .log_expect("Invalid Credential Flow");
 
-    info("Credential Offer Flow", Some(&flow));
+    debug("Credential Offer Flow", Some(&flow));
+
     let grants = offer.clone().grants.log_expect("No grants found");
     match flow {
         CredentialOfferFlow::AuthorizationCodeFlow => {
