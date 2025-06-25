@@ -35,7 +35,7 @@ async fn main() {
 
     match &cli.command {
         Commands::Offer { offer } => {
-            let normalized = handle_offer_command(offer);
+            let normalized = handle_offer_command(offer).await;
             stdout(&normalized);
         }
         Commands::Authorize {
@@ -131,7 +131,7 @@ async fn main() {
         }
         Commands::Interactive { offer } => {
             info("Starting Interactive Flow", Some(&offer));
-            let normalized = handle_offer_command(offer);
+            let normalized = handle_offer_command(offer).await;
             info("Credential Offer", Some(&normalized));
 
             let confirmation = Confirm::new()

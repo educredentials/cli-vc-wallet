@@ -165,6 +165,7 @@ impl From<serde_json::Error> for CredentialError {
     }
 }
 
+#[derive(Serialize)]
 pub struct JwtCredential {
     pub header: Value,
     pub payload: CredentialPayload,

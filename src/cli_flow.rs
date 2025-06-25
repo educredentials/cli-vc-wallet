@@ -3,10 +3,10 @@ use crate::{
     output::{debug, info, sub_info, LogExpect},
 };
 
-pub fn handle_offer_command(offer: &str) -> CredentialOffer {
+pub async fn handle_offer_command(offer: &str) -> CredentialOffer {
     debug("Processing offer", Some(&offer));
     let openid_url =
-        OpenIdCredentialOffer::from_uri(&offer).log_expect("Invalid OpenID Credential Offer");
+        OpenIdCredentialOffer::new().with_uri(&offer).log_expect("Invalid OpenID Credential Offer");
 
     openid_url
         .validate()
@@ -19,12 +19,15 @@ pub fn handle_offer_command(offer: &str) -> CredentialOffer {
             .credential_offer()
             .log_expect("Invalid Credential Offer");
     } else {
-        info("Credential Offer is by Reference", None::<&String>);
-        todo!("Implement Normalizing the Credential Offer by fetching it");
+        info("Credential Offer Type", Some(&"By Reference"));
+        offer = openid_url
+            .credential_offer_by_reference()
+            .await
+            .log_expect("Invalid Credential Offer");
     }
 
     let flow = openid_url
-        .credential_flow()
+        .credential_flow(&offer)
         .log_expect("Invalid Credential Flow");
 
     info("Credential Offer Flow", Some(&flow));

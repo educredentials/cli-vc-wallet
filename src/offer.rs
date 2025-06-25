@@ -1,7 +1,9 @@
-use std::fmt::Display;
+use core::fmt;
 
 use serde::{Deserialize, Serialize};
 use url::Url;
+
+use crate::http_client::http_client;
 
 #[derive(Deserialize, Debug)]
 pub struct OpenIdCredentialOffer {
@@ -9,9 +11,22 @@ pub struct OpenIdCredentialOffer {
     pub credential_offer: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub credential_offer_uri: Option<String>,
+
+    #[serde(skip)]
+    client: reqwest::Client,
 }
 
 impl OpenIdCredentialOffer {
+    pub fn new() -> Self {
+        let client = http_client().expect("Could not create HTTP client");
+
+        Self {
+            credential_offer: None,
+            credential_offer_uri: None,
+            client,
+        }
+    }
+
     pub fn validate(&self) -> Result<(), String> {
         if self.credential_offer.is_none() && self.credential_offer_uri.is_none() {
             return Err("Neither credential_offer nor credential_offer_uri is present".to_string());
@@ -22,19 +37,24 @@ impl OpenIdCredentialOffer {
         Ok(())
     }
 
-    pub fn from_uri(uri: &str) -> Result<Self, String> {
+    pub fn with_uri(&self, uri: &str) -> Result<Self, String> {
         let url = Url::parse(uri).map_err(|e| format!("Could not parse URL: {}", e))?;
         let query = url
             .query()
             .ok_or_else(|| "No query parameters in offer URI".to_string())?;
-        serde_qs::from_str(query).map_err(|e| format!("Invalid OpenID Credential Offer: {}", e))
+
+        let mut new_self: Self = serde_qs::from_str(query)
+            .map_err(|e| format!("Invalid OpenID Credential Offer: {}", e))
+            .unwrap();
+        new_self.client = self.client.clone();
+
+        Ok(new_self)
     }
 
-    pub fn credential_flow(&self) -> Result<CredentialOfferFlow, String> {
-        let grants = self
-            .credential_offer()
-            .expect("TODO: can only work on by_value for now")
+    pub fn credential_flow(&self, offer: &CredentialOffer) -> Result<CredentialOfferFlow, String> {
+        let grants = &offer
             .grants
+            .clone()
             .expect("No grants present. TODO: fetch from issuer metadata instead");
 
         // TODO: If grants is not present or is empty, the Wallet MUST determine the Grant Types the
@@ -66,6 +86,29 @@ impl OpenIdCredentialOffer {
         let offer = self.credential_offer.as_ref().expect("No credential offer");
         Ok(serde_json::from_str(&offer)?)
     }
+
+    pub async fn credential_offer_by_reference(&self) -> Result<CredentialOffer, OfferError> {
+        let offer_uri = self
+            .credential_offer_uri
+            .as_ref()
+            .expect("No credential offer URI");
+        let req = self.client.get(offer_uri);
+
+        let response = req
+            .send()
+            .await
+            .expect("Failed to send request to credential offer URI");
+
+        if !response.status().is_success() {
+            return Err(OfferError {
+                message: format!("Failed to resolve credential offer: {}", response.status()),
+            });
+        }
+
+        let offer_text = response.text().await.expect("Failed to read response text");
+
+        Ok(serde_json::from_str::<CredentialOffer>(&offer_text)?)
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -74,7 +117,7 @@ pub enum CredentialOfferFlow {
     AuthorizationCodeFlow,
 }
 
-impl Display for CredentialOfferFlow {
+impl fmt::Display for CredentialOfferFlow {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CredentialOfferFlow::PreAuthorizedCodeFlow => "Pre-authorized code flow".fmt(f),
@@ -101,7 +144,7 @@ impl CredentialOffer {
     }
 }
 
-impl Display for CredentialOffer {
+impl fmt::Display for CredentialOffer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -142,6 +185,24 @@ pub struct AuthorizationCode {
     // metadata.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub authorization_server: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct OfferError {
+    pub message: String,
+}
+impl fmt::Display for OfferError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl From<serde_json::Error> for OfferError {
+    fn from(error: serde_json::Error) -> Self {
+        Self {
+            message: format!("Could not deserialize response: {}", error),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -208,9 +269,18 @@ mod tests {
         let query = url.query().expect("No query parameters in offer URI");
         let openid_credential_offer: OpenIdCredentialOffer =
             serde_qs::from_str(query).expect("Could not deserialize query parameters");
+        let credential_offer: CredentialOffer = serde_json::from_str(
+            openid_credential_offer
+                .credential_offer
+                .as_ref()
+                .expect("No credential offer"),
+        )
+        .expect("Could not deserialize credential offer");
 
         assert_eq!(
-            openid_credential_offer.credential_flow().unwrap(),
+            openid_credential_offer
+                .credential_flow(&credential_offer)
+                .unwrap(),
             CredentialOfferFlow::PreAuthorizedCodeFlow
         );
     }
