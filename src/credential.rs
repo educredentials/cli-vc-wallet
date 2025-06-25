@@ -39,6 +39,8 @@ pub struct CredentialResponse {
 // println!("\tissuer:      {}", &credential.issuer);
 // println!("\tsubject:     {}", &credential.credential_subject);
 
+// TODO: implement option to send the issuer_state with the body or implicit in the access token
+//
 // TODO: implement all of credential error responses as defined in:
 // https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-error-response
 //
