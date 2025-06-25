@@ -92,6 +92,20 @@ pub enum Commands {
         algorithm: Option<String>,
     },
 
+    /// Display a credential
+    ///
+    /// This command requires a credential as string
+    ///
+    /// This command will:
+    /// - Print the credential in a human-readable format
+    /// - Print the metadata of the credential in a human-readable format
+    /// - Print the credential type, format and version
+    #[command(verbatim_doc_comment)]
+    Display {
+        #[arg(value_name = "CREDENTIAL")]
+        credential: MaybeStdin<String>,
+    },
+    
     /// Verify a credential and its proof
     /// 
     /// This command will:

@@ -121,6 +121,12 @@ async fn main() {
                 });
             }
         }
+        Commands::Display { credential } => {
+            info("Displaying Credential", Some(&credential));
+            let unpacked_credential =
+                JwtCredential::from_jwt(credential).expect("Could not unpack credential");
+            stdout(&unpacked_credential);
+        }
         Commands::Verify { credential } => {
             println!("Verifying credential: {}", credential);
             let result = verify(credential);
