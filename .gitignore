@@ -1,6 +1,9 @@
 # Build artifacts
 /target
 
+# dev artifacts
+tmp
+
 ##
 # Secrets
 .env
