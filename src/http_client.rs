@@ -12,4 +12,3 @@ pub fn http_client() -> Result<reqwest::Client, reqwest::Error> {
             .connection_verbose(true)
             .build();
 }
-
