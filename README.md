@@ -31,13 +31,18 @@ Planned commands are:
    - [x] exchange the authorization code for an access token
    - [x] print the resulting access token to stdout on success
    - [x] print the error to stderr on failure
-- [ ] `vc-wallet request` - given a normalized offer and one of below, requests the credential from the issuer
+- [x] `vc-wallet proof` - generate and view proof of possession
+   - [x] allow the user to provide keypair and DID via commandline or stdin
+   - [x] generate a JWT proof of possession for a given credential issuer
+   - [x] optionally include a nonce in the proof
+   - [x] display the proof contents
+   - [x] print the proof JWT to stdout
+- [ ] `vc-wallet request` - given a normalized offer and a proof of possession, requests the credential from the issuer
+   - [x] require a proof of possession JWT as input
    - [ ] EITHER an access token,
    - [ ] OR a pre-shared secret
-   - [ ] allow the user to choose a proof type and algorithm using a commandline argument
-   - [ ] show the user the proof that will be sent to the issuer
-   - [ ] request the credential from the issuer
-   - [ ] print the credential to stdout
+   - [x] request the credential from the issuer
+   - [x] print the credential to stdout
 - [ ] `vc-wallet verify` - given a credential, verifies the proof and the credential
    - [ ] show the user the proof that was sent by the issuer
    - [ ] verify the proof
@@ -62,8 +67,7 @@ Other TODOs and fixes, aside from the abovementioned commands and features:
 
 - [ ] Move `issuer_state` from Credential Request to Authorization Request.
 - [ ] Make `issuer_state` required *when it is in the offer*.
-- [ ] Move KEYPAIR and DIDKEY to commandline arguments - potentially with
-  reference to a file rather than the value itself. Could default to a known location on disk.
+- [x] Move KEYPAIR and DIDKEY to commandline arguments - implemented via the `proof` command which accepts these as arguments or via stdin
 - [ ] Have `issuer-metadata` try several URLS and pick the first one that resolves rather than only .well-known/openid-credential-issuer
 
 ## Design goals and principles
@@ -150,17 +154,51 @@ The [spec allows several types and structures](https://openid.net/specs/openid-4
     ```bash
     didkit key to did --key-path keys/key.json > keys/did.txt
     ```
-4. Store the keypair json and the did:key in ENV vars, so the wallet can use them.
-    4.1. as ENV vars
-    ```bash
-    export KEYPAIR=$(cat keys/key.json)
-    export DIDKEY=$(cat keys/did.txt)
-    ```
-  4.2. in .env file
-    ```bash
-    echo "KEYPAIR=$(cat keys/key.json | tr -d \"\n")" >> .env
-    echo "DIDKEY=$(cat keys/did.txt)" >> .env
-    ```
+4. Store the keypair json and the did:key for use with the commands.
+   
+#### Using the proof command
+
+The `proof` command generates a JWT proof of possession that demonstrates control of a cryptographic key:
+
+```bash
+# Generate a proof using command-line arguments
+cli-vc-wallet proof \
+  --credential-issuer "https://issuer.example.com" \
+  --keypair "$(cat keys/key.json)" \
+  --did "$(cat keys/did.txt)"
+
+# Generate a proof with a nonce
+cli-vc-wallet proof \
+  --credential-issuer "https://issuer.example.com" \
+  --keypair "$(cat keys/key.json)" \
+  --did "$(cat keys/did.txt)" \
+  --nonce "challenge-from-issuer"
+
+# Read keypair from stdin
+cat keys/key.json | cli-vc-wallet proof \
+  --credential-issuer "https://issuer.example.com" \
+  --keypair - \
+  --did "$(cat keys/did.txt)"
+```
+
+The proof output can be piped to the `request` command:
+
+```bash
+# Generate proof and use it in credential request
+PROOF=$(cli-vc-wallet proof \
+  --credential-issuer "https://issuer.example.com" \
+  --keypair "$(cat keys/key.json)" \
+  --did "$(cat keys/did.txt)")
+
+cli-vc-wallet request \
+  --configuration-id "UniversityDegreeCredential" \
+  --credential-issuer "https://issuer.example.com" \
+  --credential-endpoint "https://issuer.example.com/credential" \
+  --proof "$PROOF" \
+  --access-token "your-access-token"
+```
+
+**NOTE:** The `request` command now requires a proof parameter. You must generate the proof separately using the `proof` command before making a credential request.
 
 TODO: implement arguments to pass the keypair and did:key as input to the commands.
 NOTE: The wallet is stateless, so the keypair and did:key must be provided as input to the commands.
