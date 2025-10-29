@@ -37,10 +37,9 @@ Planned commands are:
    - [x] optionally include a nonce in the proof
    - [x] display the proof contents
    - [x] print the proof JWT to stdout
-- [ ] `vc-wallet request` - given a normalized offer and a proof of possession, requests the credential from the issuer
+- [~] `vc-wallet request` - given a normalized offer and a proof of possession, requests the credential from the issuer
    - [x] require a proof of possession JWT as input
-   - [ ] EITHER an access token,
-   - [ ] OR a pre-shared secret
+   - [x] accept EITHER an access token OR a pre-shared secret (optional parameter)
    - [x] request the credential from the issuer
    - [x] print the credential to stdout
 - [ ] `vc-wallet verify` - given a credential, verifies the proof and the credential
@@ -200,6 +199,4 @@ cli-vc-wallet request \
 
 **NOTE:** The `request` command now requires a proof parameter. You must generate the proof separately using the `proof` command before making a credential request.
 
-TODO: implement arguments to pass the keypair and did:key as input to the commands.
-NOTE: The wallet is stateless, so the keypair and did:key must be provided as input to the commands.
-      For now, we pass them, using ENV vars.
+The wallet is stateless, so the keypair and DID must be provided as input to the `proof` command via command-line arguments or stdin.
