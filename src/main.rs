@@ -79,22 +79,37 @@ async fn main() {
             );
             stdout(&well_known);
         }
+        Commands::Proof {
+            credential_issuer,
+            nonce,
+            keypair,
+            did,
+        } => {
+            info("Generating Proof of Possession", Some(&credential_issuer));
+            
+            let keypair_str = keypair.to_string();
+            let did_str = did.to_string();
+            
+            // build our proof of Possession
+            let jwt_key = JwtProof::new(&keypair_str, &did_str);
+            let proof = jwt_key.create_jwt(
+                &credential_issuer,
+                jwt::current_timestamp(),
+                nonce.as_ref().map(|s| s.to_string())
+            );
+            
+            info("Generated Proof of Possession JWT", Some(&proof));
+            stdout(&proof);
+        }
         Commands::Request {
             configuration_id,
-            credential_issuer,
+            credential_issuer: _,
             credential_endpoint,
             issuer_state,
             access_token,
-            proof_type: _,
-            algorithm: _,
+            proof,
         } => {
-            let pop_keypair = std::env::var("KEYPAIR").log_expect("KEYPAIR ENV var not set");
-            let pop_did = std::env::var("DID").log_expect("DID ENV var not set");
-
-            // build our proof of Possession
-            let jwt_key = JwtProof::new(&pop_keypair, &pop_did);
-            let proof = jwt_key.create_jwt(&credential_issuer, jwt::current_timestamp(), None);
-            info("Offering proof of Possession", Some(&proof));
+            info("Requesting credential with provided proof", Some(&proof.to_string()));
             let credential_endpoint = Url::parse(&credential_endpoint).unwrap();
 
             // Optional Access Token
@@ -105,7 +120,7 @@ async fn main() {
             let credential_request = CredentialRequest::new(
                 credential_endpoint,
                 configuration_id.to_string(),
-                proof,
+                proof.to_string(),
                 issuer_state.as_ref().map(|s| s.to_string()),
                 access_token,
             );

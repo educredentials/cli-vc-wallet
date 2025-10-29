@@ -63,6 +63,31 @@ pub enum Commands {
         url: MaybeStdin<String>,
     },
 
+    /// Generate and view proof of possession
+    /// 
+    /// This command will:
+    /// - Generate a JWT proof of possession
+    /// - Display the proof contents
+    /// - Output the proof JWT to stdout
+    /// 
+    /// The proof is used to demonstrate control of a cryptographic key
+    /// when requesting credentials from an issuer.
+    #[command(verbatim_doc_comment)]
+    Proof {
+        /// The credential issuer URL (audience for the proof)
+        #[arg(short = 'i', long, value_name = "CREDENTIAL_ISSUER")]
+        credential_issuer: String,
+        /// Optional nonce value for the proof
+        #[arg(short = 'n', long, value_name = "NONCE")]
+        nonce: Option<String>,
+        /// Keypair in JWK format. Use - to read from stdin
+        #[arg(short = 'k', long, value_name = "KEYPAIR")]
+        keypair: MaybeStdin<String>,
+        /// DID identifier. Use - to read from stdin
+        #[arg(short = 'd', long, value_name = "DID")]
+        did: MaybeStdin<String>,
+    },
+
     /// Request credential from issuer
     /// 
     /// This command requires either:
@@ -70,9 +95,7 @@ pub enum Commands {
     /// - OR a pre-shared secret
     /// 
     /// It will:
-    /// - Allow proof type and algorithm selection
-    /// - Display proof before sending
-    /// - Request credential from issuer
+    /// - Request credential from issuer using the provided proof
     /// - Output credential to stdout
     #[command(verbatim_doc_comment)]
     Request {
@@ -86,10 +109,9 @@ pub enum Commands {
         issuer_state: Option<String>,
         #[arg(short = 't', long, value_name = "ACCESS_TOKEN")]
         access_token: Option<String>,
-        #[arg(short, long, value_name = "PROOF_TYPE")]
-        proof_type: Option<String>,
-        #[arg(short, long, value_name = "ALGORITHM")]
-        algorithm: Option<String>,
+        /// JWT proof of possession (required). Use - to read from stdin
+        #[arg(short = 'p', long, value_name = "PROOF", required = true)]
+        proof: MaybeStdin<String>,
     },
 
     /// Display a credential
