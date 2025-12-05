@@ -31,10 +31,21 @@ Planned commands are:
    - [x] exchange the authorization code for an access token
    - [x] print the resulting access token to stdout on success
    - [x] print the error to stderr on failure
+- [ ] `vc-wallet key` - generate, view and convert keys
+   - [ ] generate a new keypair of format:
+     - [ ] Ed25519
+     - [ ] Secp256k1
+     - [ ] Others?
+   - [ ] view the public key
+   - [ ] convert the public key to a different format
+   - [ ] convert the private key to a different format
 - [x] `vc-wallet proof` - generate and view proof of possession
    - [x] allow the user to provide keypair and DID via commandline or stdin
    - [x] generate a JWT proof of possession for a given credential issuer
-   - [x] optionally include a nonce in the proof
+   - [ ] provide credential issuer metadata as input to determine "credential-issuer", "cryptographic_binding_methods_supported" and "credential_signing_alg_values_supported".
+   - [ ] generate a di_vp proof of possession
+   - [ ] generate an attestation proof of possession
+   - [ ] optionally include a nonce in the proof
    - [x] display the proof contents
    - [x] print the proof JWT to stdout
 - [~] `vc-wallet request` - given a normalized offer and a proof of possession, requests the credential from the issuer
@@ -66,7 +77,6 @@ Other TODOs and fixes, aside from the abovementioned commands and features:
 
 - [ ] Move `issuer_state` from Credential Request to Authorization Request.
 - [ ] Make `issuer_state` required *when it is in the offer*.
-- [x] Move KEYPAIR and DIDKEY to commandline arguments - implemented via the `proof` command which accepts these as arguments or via stdin
 - [ ] Have `issuer-metadata` try several URLS and pick the first one that resolves rather than only .well-known/openid-credential-issuer
 
 ## Design goals and principles
@@ -109,6 +119,7 @@ Other TODOs and fixes, aside from the abovementioned commands and features:
 * [ ] Determine wether we have an authorized code flow or a pre-authorized flow.
 * [ ] Visualize the progress of the flow in a sequence diagram or similar in the terminal.
 * [ ] Determine the issuers capabilities wrt to proof types and algorithms, fail if we can't provide the right proof, and offer cli-options to provide one proof when we support more.
+* [ ] Basic key management. Create, read, convert keys.
 * [ ] [Deferred Credential Requests](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-deferred-credential-respons)
 - [ ] [Encrypted Credential Responses](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#section-8.2-16)
 - [ ] Implement VCs using JSON-LD
@@ -135,12 +146,33 @@ files.
 When retrieving a Verifiable Credential, the wallet will provide a Proof of Possession and key
 material to the issuer.
 
-The [spec allows several types and structures](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-request). We limit ourselves to the following:
+The [spec allows several types and structures](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-request). 
 
+The issuer-metadata will provide `cryptographic_binding_methods_supported`, and `credential_signing_alg_values_supported` per credential configuration.
+These limit the possible algorithms and key types that can be used for signing and binding.
+
+We now limit ourselves to the following and ignore what an issuer-metadata allows:
 * Only one proof, we don't support multiple proofs.
 * Only the [JWT proof type](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-proof-types).
 * Key generated with ed25519 algorithm.
 * A did:key DID.
+
+Ideally, we'd provide the "proof" command with the issuer metadata, instead of the "issuer" string. This Metadata would then be used to determine the supported algorithms and key types.
+And with that, verify that the key in the "key" argument, and proof type argument, are valid. See TODOs
+
+Other proof types, such as di_vp and attestation proofs are to be considered. See TODOS.
+Other algorithms, see below, must be cross-referenced with the [spec](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-credential-request) if applicable and then implemented.
+    /// HMAC using SHA-256
+    /// HMAC using SHA-384
+    /// HMAC using SHA-512
+    /// ECDSA using SHA-256
+    /// ECDSA using SHA-384
+    /// RSASSA-PKCS1-v1_5 using SHA-256
+    /// RSASSA-PKCS1-v1_5 using SHA-384
+    /// RSASSA-PKCS1-v1_5 using SHA-512
+    /// RSASSA-PSS using SHA-256
+    /// RSASSA-PSS using SHA-384
+    /// RSASSA-PSS using SHA-512
 
 #### Generating keypair and did:key
 
