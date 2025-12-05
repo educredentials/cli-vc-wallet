@@ -306,6 +306,6 @@ mod tests {
         // assert_eq!(payload.vc.credential_type[1], "OpenBadgeCredential");
         // assert_eq!(payload.vc.id, Some("https://demo.edubadges.nl/public/assets/credentials/2c4d1b8e-0a3f-4b5c-9f7d-6a2e0f3a5b7c.json".to_string()));
         dbg!(&payload.vc);
-        assert_eq!(payload.vc["@context"][0], "https://www.w3.org/2018/credentials/v1 FAAL");
+        assert_eq!(payload.vc["@context"][0], "https://www.w3.org/2018/credentials/v1");
     }
 }
