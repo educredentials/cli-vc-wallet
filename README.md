@@ -219,7 +219,7 @@ The proof output can be piped to the `request` command:
 PROOF=$(cli-vc-wallet proof \
   --credential-issuer "https://issuer.example.com" \
   --keypair "$(cat keys/key.json)" \
-  --did "$(cat keys/did.txt)")
+  --did "$(cat keys/did.txt)" | jq -r '.jwt')
 
 cli-vc-wallet request \
   --configuration-id "UniversityDegreeCredential" \
