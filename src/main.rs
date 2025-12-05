@@ -260,7 +260,7 @@ async fn main() {
             let credential_request = CredentialRequest::new(
                 credential_endpoint,
                 configuration_id.to_string(),
-                proof,
+                proof.to_string(),
                 normalized.get_issuer_state(),
                 access_token,
             );

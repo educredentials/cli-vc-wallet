@@ -4,7 +4,8 @@ extern crate jsonwebtoken as jwt;
 use jwk::{JsonWebKey, Key};
 use jwt::{encode, jwk::Jwk, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::fmt::Display;
+use std::{time::{SystemTime, UNIX_EPOCH}};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Claims {
@@ -35,7 +36,7 @@ impl JwtProof {
         }
     }
 
-    pub fn create_jwt(&self, audience: &str, issued_at: u64, nonce: Option<String>) -> String {
+    pub fn create_jwt(&self, audience: &str, issued_at: u64, nonce: Option<String>) -> ProofOutput {
         let claims = Claims {
             iss: self.issuer_id.clone(),
             aud: audience.to_string(),
@@ -64,7 +65,33 @@ impl JwtProof {
             ..Default::default()
         };
 
-        encode(&header, &claims, &self.encoding_key).expect("JWT creation failed")
+        let jwt =  encode(&header, &claims, &self.encoding_key).expect("JWT creation failed");
+        ProofOutput {
+            jwt: Some(jwt),
+            // Place for other types
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct ProofOutput {
+    pub jwt: Option<String>,
+    // Place for other types
+}
+
+impl Display for ProofOutput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(jwt) = &self.jwt {
+            write!(f, "{}", jwt)
+        } else {
+            write!(f, "")
+        }
+    }
+}
+
+impl Into<String> for ProofOutput {
+    fn into(self) -> String {
+        self.jwt.unwrap_or_default()
     }
 }
 
@@ -106,7 +133,7 @@ mod tests {
         let jwt_proof = JwtProof::new(RAW_JWK, issuer_id);
         let jwt = jwt_proof.create_jwt(audience, issued_at, Some(nonce.to_string()));
 
-        assert!(!jwt.is_empty());
+        assert!(!jwt.to_string().is_empty());
     }
 
     #[test]
@@ -123,7 +150,7 @@ mod tests {
 
         let mut validation = Validation::new(jwt::Algorithm::ES256);
         validation.set_audience(&[audience]);
-        let token_message = decode::<Claims>(&jwt, &key, &validation).expect("Decoding failed");
+        let token_message = decode::<Claims>(&jwt.jwt.unwrap(), &key, &validation).expect("Decoding failed");
 
         assert_eq!(token_message.header.alg, jwt::Algorithm::ES256);
         // Sphereon expects this .alg to be set.
