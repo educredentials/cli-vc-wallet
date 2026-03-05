@@ -117,6 +117,7 @@ Other TODOs and fixes, aside from the abovementioned commands and features:
 
 * [ ] Resolve and "normalize" the [offer-by-reference to a full offer](https://openid.net/specs/openid-4-verifiable-credential-issuance-1_0.html#name-sending-credential-offer-by-).
 * [ ] Determine wether we have an authorized code flow or a pre-authorized flow.
+* [ ] Check if https://github.com/spruceid/oid4vci-rs can be used to implement the steps in the OIDC4vci flow.
 * [ ] Visualize the progress of the flow in a sequence diagram or similar in the terminal.
 * [ ] Determine the issuers capabilities wrt to proof types and algorithms, fail if we can't provide the right proof, and offer cli-options to provide one proof when we support more.
 * [ ] Basic key management. Create, read, convert keys.
