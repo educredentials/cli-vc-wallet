@@ -8,7 +8,6 @@ use openidconnect::AccessToken;
 use output::{debug, error, info, stdout, sub_info, LogExpect};
 use url::Url;
 
-
 mod cli;
 mod cli_flow;
 mod credential;
@@ -67,9 +66,7 @@ async fn main() {
                     .log_expect("Could not authenticate and authorize user");
 
             debug("Access Token", Some(&access_token.secret()));
-            stdout(HashMap::from([
-                ("access_token", access_token.secret()),
-            ]));
+            stdout(HashMap::from([("access_token", access_token.secret())]));
         }
         Commands::Issuer { url } => {
             info("Getting Server Metadata for issuer", Some(&url));

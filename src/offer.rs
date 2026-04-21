@@ -111,8 +111,7 @@ impl OpenIdCredentialOffer {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-#[derive(Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub enum CredentialOfferFlow {
     #[default]
     PreAuthorizedCodeFlow,
@@ -127,7 +126,6 @@ impl fmt::Display for CredentialOfferFlow {
         }
     }
 }
-
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialOffer {

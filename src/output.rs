@@ -51,7 +51,9 @@ fn blank_prefix() -> String {
 }
 
 pub fn attn(title: &str, message: &str) {
-    if is_quiet() { return; }
+    if is_quiet() {
+        return;
+    }
     eprintln!(
         "\n{} {}\n{} {}",
         line_prefix(ConsoleType::Info),
@@ -62,7 +64,9 @@ pub fn attn(title: &str, message: &str) {
 }
 
 pub fn info<T: Display>(message: &str, value: Option<&T>) {
-    if is_quiet() { return; }
+    if is_quiet() {
+        return;
+    }
     match value {
         Some(v) => eprintln!(
             "{} {}: {}",
@@ -74,7 +78,9 @@ pub fn info<T: Display>(message: &str, value: Option<&T>) {
     }
 }
 pub fn sub_info<T: Display>(message: &str, value: Option<&T>, level: usize) {
-    if is_quiet() { return; }
+    if is_quiet() {
+        return;
+    }
     match value {
         Some(v) => eprintln!(
             "{} |{} {}: {}",
@@ -88,7 +94,9 @@ pub fn sub_info<T: Display>(message: &str, value: Option<&T>, level: usize) {
 }
 
 pub fn error(message: &str) {
-    if is_quiet() { return; }
+    if is_quiet() {
+        return;
+    }
     eprintln!("{} {}", line_prefix(ConsoleType::Error), message);
 }
 

@@ -30,7 +30,10 @@ pub async fn handle_offer_command(offer: &str) -> CredentialOffer {
         .log_expect("Invalid Credential Flow");
 
     info("Credential issuer", Some(&offer.credential_issuer));
-    info("Credential Configuration IDs", Some(&offer.credential_configuration_ids.len()));
+    info(
+        "Credential Configuration IDs",
+        Some(&offer.credential_configuration_ids.len()),
+    );
     for id in &offer.credential_configuration_ids {
         sub_info("Credential Configuration ID", Some(id), 2);
     }
