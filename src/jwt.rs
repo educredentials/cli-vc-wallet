@@ -5,7 +5,7 @@ use jwk::{JsonWebKey, Key};
 use jwt::{encode, jwk::Jwk, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-use std::{time::{SystemTime, UNIX_EPOCH}};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Claims {
@@ -29,7 +29,6 @@ impl JwtProof {
         let encoding_key =
             EncodingKey::from_ec_pem(key_material.as_bytes()).expect("Key creation failed");
 
-
         Self {
             issuer_id: Some(did.to_string()),
             encoding_key,
@@ -42,7 +41,7 @@ impl JwtProof {
             aud: audience.to_string(),
             iat: issued_at,
             exp: issued_at + 3600,
-            nonce
+            nonce,
         };
 
         // We are using ECDSA with SHA-256, because this seems the only one that is supported by
@@ -65,7 +64,7 @@ impl JwtProof {
             ..Default::default()
         };
 
-        let jwt =  encode(&header, &claims, &self.encoding_key).expect("JWT creation failed");
+        let jwt = encode(&header, &claims, &self.encoding_key).expect("JWT creation failed");
         ProofOutput {
             jwt: Some(jwt),
             // Place for other types
@@ -150,7 +149,8 @@ mod tests {
 
         let mut validation = Validation::new(jwt::Algorithm::ES256);
         validation.set_audience(&[audience]);
-        let token_message = decode::<Claims>(&jwt.jwt.unwrap(), &key, &validation).expect("Decoding failed");
+        let token_message =
+            decode::<Claims>(&jwt.jwt.unwrap(), &key, &validation).expect("Decoding failed");
 
         assert_eq!(token_message.header.alg, jwt::Algorithm::ES256);
         // Sphereon expects this .alg to be set.

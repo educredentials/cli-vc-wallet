@@ -3,7 +3,7 @@ use cli::{Cli, Commands};
 use dialoguer::{Confirm, Input, Select};
 use jwt::JwtProof;
 use openidconnect::AccessToken;
-use output::{debug, info, stdout, LogExpect};
+use output::{debug, error, info, stdout, sub_info, LogExpect};
 use url::Url;
 
 use tokio;
@@ -86,18 +86,18 @@ async fn main() {
             did,
         } => {
             info("Generating Proof of Possession", Some(&credential_issuer));
-            
+
             let keypair_str = keypair.to_string();
             let did_str = did.to_string();
-            
+
             // build our proof of Possession
             let jwt_key = JwtProof::new(&keypair_str, &did_str);
             let proof = jwt_key.create_jwt(
                 &credential_issuer,
                 jwt::current_timestamp(),
-                nonce.as_ref().map(|s| s.to_string())
+                nonce.as_ref().map(|s| s.to_string()),
             );
-            
+
             info("Generated Proof of Possession JWT", Some(&proof));
             stdout(&proof);
         }
@@ -109,7 +109,10 @@ async fn main() {
             access_token,
             proof,
         } => {
-            info("Requesting credential with provided proof", Some(&proof.to_string()));
+            info(
+                "Requesting credential with provided proof",
+                Some(&proof.to_string()),
+            );
             let credential_endpoint = Url::parse(&credential_endpoint).unwrap();
 
             // Optional Access Token
@@ -143,11 +146,96 @@ async fn main() {
             stdout(&unpacked_credential);
         }
         Commands::Verify { credential } => {
-            println!("Verifying credential: {}", credential);
-            let result = verify(credential);
+            info::<&str>("Verifying credential", None);
+
+            let credential_str = credential.to_string();
+
+            // Trim whitespace in case credential was read from stdin with newlines
+            let credential_str = credential_str.trim().to_string();
+
+            let result = verify(&credential_str);
+
             match result {
-                Ok(_) => println!("Credential is valid"),
-                Err(e) => println!("Credential verification failed: {:?}", e),
+                Ok(verification_result) => {
+                    let status = match verification_result.valid {
+                        true => "VALID",
+                        false => "INVALID",
+                    };
+                    info("Credential is INVALID", Some(&status));
+
+                    // Display credential info
+                    sub_info(
+                        "Issuer",
+                        Some(&verification_result.credential_info.issuer),
+                        1,
+                    );
+                    sub_info(
+                        "Subject",
+                        Some(&verification_result.credential_info.subject),
+                        1,
+                    );
+
+                    // Display verification checks
+                    info::<&str>("Verification Checks", None);
+                    sub_info(
+                        "JWT format valid",
+                        Some(&verification_result.checks.jwt_format_valid),
+                        2,
+                    );
+                    sub_info(
+                        "Header decoded",
+                        Some(&verification_result.checks.header_decoded),
+                        2,
+                    );
+                    sub_info(
+                        "Payload decoded",
+                        Some(&verification_result.checks.payload_decoded),
+                        2,
+                    );
+                    sub_info(
+                        "Signature present",
+                        Some(&verification_result.checks.signature_present),
+                        2,
+                    );
+                    sub_info(
+                        "Has verifiable credential",
+                        Some(&verification_result.checks.has_verifiable_credential),
+                        2,
+                    );
+                    sub_info(
+                        "Has issuer",
+                        Some(&verification_result.checks.has_issuer),
+                        2,
+                    );
+                    sub_info(
+                        "Has subject",
+                        Some(&verification_result.checks.has_subject),
+                        2,
+                    );
+
+                    if let Some(expired) = verification_result.checks.is_expired {
+                        sub_info("Is expired", Some(&expired), 2);
+                    }
+                    if let Some(exp) = verification_result.checks.expires_at {
+                        sub_info("Expires at", Some(&exp), 2);
+                    }
+                    if let Some(iat) = verification_result.checks.issued_at {
+                        sub_info("Issued at", Some(&iat), 2);
+                    }
+
+                    // Display header
+                    debug(
+                        "JWT Header",
+                        Some(&verification_result.credential_info.header),
+                    );
+
+                    // Print full verification result as JSON to stdout
+                    stdout(&verification_result);
+                }
+                Err(e) => {
+                    error(&format!("Credential verification failed: {}", e));
+                    panic!("Credential verification failed: {}", e);
+                }
             }
         }
         Commands::Interactive { offer } => {

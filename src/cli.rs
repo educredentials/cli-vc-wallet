@@ -137,8 +137,9 @@ pub enum Commands {
     /// - Output verification results
     #[command(verbatim_doc_comment)]
     Verify {
+        /// The credential JWT to verify. Use - to read from stdin
         #[arg(value_name = "CREDENTIAL")]
-        credential: String,
+        credential: MaybeStdin<String>,
     },
 
     /// Run an interactive flow

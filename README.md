@@ -48,16 +48,16 @@ Planned commands are:
    - [ ] optionally include a nonce in the proof
    - [x] display the proof contents
    - [x] print the proof JWT to stdout
-- [~] `vc-wallet request` - given a normalized offer and a proof of possession, requests the credential from the issuer
+- [x] `vc-wallet request` - given a normalized offer and a proof of possession, requests the credential from the issuer
    - [x] require a proof of possession JWT as input
    - [x] accept EITHER an access token OR a pre-shared secret (optional parameter)
    - [x] request the credential from the issuer
    - [x] print the credential to stdout
-- [ ] `vc-wallet verify` - given a credential, verifies the proof and the credential
-   - [ ] show the user the proof that was sent by the issuer
-   - [ ] verify the proof
-   - [ ] verify the credential
-   - [ ] print the verification results to stdout
+- [~] `vc-wallet verify` - given a credential, verifies the proof and the credential
+   - [x] show the user the proof that was sent by the issuer
+   - [x] verify the proof
+   - [x] verify the credential
+   - [x] print the verification results to stdout
 - [ ] `vc-wallet present` - given a presentation request, shows the user credentials that can be offered
    - [ ] show the user the presentation request
    - [ ] show the user the credentials that can be offered from a glob, directory or list of credentials in JSON on disk
