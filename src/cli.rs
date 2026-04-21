@@ -12,7 +12,7 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     /// Process and normalize a credential offer
-    /// 
+    ///
     /// Given a credential offer, this command will:
     /// - Determine if the offer is by value or by reference
     /// - Check if credential request requires Authorization Code Flow or is pre-authorized
@@ -27,7 +27,7 @@ pub enum Commands {
     },
 
     /// Handle authorization flow for credential issuance
-    /// 
+    ///
     /// This command will:
     /// - Print the authorization URL to stdout
     /// - Start a local webserver for callback handling
@@ -49,7 +49,7 @@ pub enum Commands {
     },
 
     /// Retrieve and display issuer metadata
-    /// 
+    ///
     /// This command will show:
     /// - Supported proof types and algorithms
     /// - Authorization server details (if configured)
@@ -64,12 +64,12 @@ pub enum Commands {
     },
 
     /// Generate and view proof of possession
-    /// 
+    ///
     /// This command will:
     /// - Generate a JWT proof of possession
     /// - Display the proof contents
     /// - Output the proof JWT to stdout
-    /// 
+    ///
     /// The proof is used to demonstrate control of a cryptographic key
     /// when requesting credentials from an issuer.
     #[command(verbatim_doc_comment)]
@@ -89,11 +89,11 @@ pub enum Commands {
     },
 
     /// Request credential from issuer
-    /// 
+    ///
     /// This command requires either:
     /// - An access token from authorization
     /// - OR a pre-shared secret
-    /// 
+    ///
     /// It will:
     /// - Request credential from issuer using the provided proof
     /// - Output credential to stdout
@@ -127,9 +127,9 @@ pub enum Commands {
         #[arg(value_name = "CREDENTIAL")]
         credential: MaybeStdin<String>,
     },
-    
+
     /// Verify a credential and its proof
-    /// 
+    ///
     /// This command will:
     /// - Display the proof from the issuer
     /// - Verify the proof
@@ -141,11 +141,14 @@ pub enum Commands {
         credential: String,
     },
 
-    /// - [ ] `vc-wallet interactive` - given only a credential offer, walk the user through the entire flow.
-    ///  - [ ] On each step, show the user what has been resolved, which calls were made, 
-    ///  - [ ] what the next step will be with a prompt to continue or abort.
-    ///  - [ ] For each step, ask the user what values and choices they must provide.
-    ///  - [ ] Show the user the contents of the final credential and the proof.
+    /// Run an interactive flow
+    ///
+    /// This command will:
+    /// - Given only a credential offer, walk the user through the entire flow.
+    /// - On each step, show the user what has been resolved, which calls were made,
+    ///   and what the next step will be with a prompt to continue or abort.
+    /// - For each step, ask the user what values and choices they must provide.
+    /// - Show the user the contents of the final credential and the proof.
     #[command(verbatim_doc_comment)]
     Interactive {
         #[arg(short, long, value_name = "OFFER")]
