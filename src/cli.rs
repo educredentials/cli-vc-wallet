@@ -5,6 +5,9 @@ use clap_stdin::MaybeStdin;
 #[command(author, version, about, long_about = None)]
 #[command(propagate_version = true)]
 pub struct Cli {
+    /// Suppress all human-readable output
+    #[arg(short, long, global = true)]
+    pub quiet: bool,
     #[command(subcommand)]
     pub command: Commands,
 }
