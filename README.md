@@ -91,8 +91,7 @@ Other TODOs and fixes, aside from the abovementioned commands and features:
 * Results should be printed to stdout as plain text or json.
 * Commands that take an input, should take it from stdin.
 * The wallet is entirely stateless. Any state needed for signing, listing, requesting must be passed into the commands as input. 
-* We support only the latest versions of specs.
-
+* We support only the latest versions of spec
 ## Non Design goals
 
 * It is not a benchmark or test suite to check compliance with specifications.
@@ -126,6 +125,64 @@ Other TODOs and fixes, aside from the abovementioned commands and features:
 - [ ] Implement VCs using JSON-LD
 - [ ] Implement VCs using ISO mDL
 - [ ] Implement VCs using IETF SD-JWT VC
+- [ ] Print unexpected errors to stdout in a consistent json format before panic. So that test suites can use it for debugging 
+- [ ] Allow ENV vars for all --arguments in a consistent and predictable naming scheme
+
+## Usage
+
+### Exploration
+
+Run commands in succession. Inspect the output, then write the output to a file or copy to the clipboard. Use that as input for a second command.
+
+
+```bash
+cli-vc-wallet offer --offer 'openid-credential-offer://?credential_offer_uri=http://localhost:8000/api/v1/offers/cc49ff3c-aa62-4f05-bd08-53f10f87afbc'
+```
+
+This will print the normalized offer to STDOUT, and information for you to STDERR.
+
+```
+cli-vc-wallet offer --offer 'openid-credential-offer://?credential_offer_uri=http://localhost:8000/api/v1/offers/cc49ff3c-aa62-4f05-bd08-53f10f87afbc' > offer.json
+```
+Will put the offer in a file to be used in a later command. E.g.
+
+```
+cat offer.json | jq -r '.credential_issuer' | cli-vc-wallet issuer --url -
+```
+
+This will print the normalized OpenId Credential Issuer Metadata to STDOUT any information for you to STDERR. It can be used to walk through a flow that commonly a mobile wallet would do all by itself.
+
+```
+OFFER = cli-vc-wallet offer --offer 'openid-credential-offer://?credential_offer_uri=http://localhost:8000/api/v1/offers/cc49ff3c-aa62-4f05-bd08-53f10f87afbc`
+CREDENTIAL_ISSUER = echo $OFFER | jq -r '.credential_issuer'
+ISSUER_STATE = echo $OFFER | jq -r '.grants.authorization_code.issuer_state'
+
+AUTHORIZATION_SERVER = cli-vc-wallet issuer --url $CREDENTIAL_ISSUER | jq -r '.authorization_servers | first'
+
+AUTHORIZATION_TOKEN = cli-vc-wallet authorize --url $AUTHORIZATION_SERVER --client-id "my-oid-client-id" | jq -r '.authorization_token'
+
+# ... and so on
+```
+
+### STDERR and STDOUT
+
+Json is always printed to STDOUT. This is data that can be piped to a file or to a next command. This output is *not surpressed* with `--quiet`.
+
+Human information is always printed to STDERR. **Also if it is successfull**. We print non-errors there too.
+Human information is not meant to be parsed, but can be parsed if needed. 
+This information can be surpressed with `--quiet`
+
+### Tests
+
+This wallet is meant to be used in automated testing. It can be called by a test suite to perform
+steps in a flow and assert output.
+
+It is best to use the `--quiet` flag, since the tests should assert the json output.
+
+A command will exit with a non-zero status if it encounters problems, like unexpected HTTP status, or unparsable output etc. Improving this error handling and making it consistent AND parsable is planned, but not implemented.
+
+NOTE: Since we print to stderr, you should not rely on "empty stderr" assertions to check if the wallet
+encountered problems. Some testing frameworks do this for you when forking out commands. 
 
 ## Persistence
 
@@ -141,6 +198,8 @@ The .env file is ignored by git, so you can safely store your secrets there.
 **NOTE:** We do not load the .env file automatically, you have to do that yourself. Use
 e.g. [zenv](https://github.com/numToStr/zenv) or any runner that can load .env
 files.
+
+In future we plan to allow every argument to be an ENV var as well.
 
 ### Keys, Certificates, JWT, JWK and DID.
 

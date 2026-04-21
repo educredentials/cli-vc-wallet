@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use clap::Parser;
 use cli::{Cli, Commands};
 use dialoguer::{Confirm, Input, Select};
@@ -31,9 +33,11 @@ async fn main() {
     env_logger::init();
 
     let cli = Cli::parse();
+    output::set_quiet(cli.quiet);
 
     match &cli.command {
         Commands::Offer { offer } => {
+            debug("Processing offer", Some(&offer));
             let normalized = handle_offer_command(offer).await;
             stdout(&normalized);
         }
@@ -63,6 +67,9 @@ async fn main() {
                     .log_expect("Could not authenticate and authorize user");
 
             debug("Access Token", Some(&access_token.secret()));
+            stdout(HashMap::from([
+                ("access_token", access_token.secret()),
+            ]));
         }
         Commands::Issuer { url } => {
             info("Getting Server Metadata for issuer", Some(&url));
