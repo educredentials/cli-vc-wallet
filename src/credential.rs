@@ -199,29 +199,29 @@ impl fmt::Display for CredentialPayload {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct VerifiableCredential {
-    #[serde(rename = "@context")]
-    pub context: Vec<String>,
-    pub id: Option<String>,
-    #[serde(rename = "type")]
-    pub credential_type: Vec<String>,
-    // pub issuer: String,
-    pub issuer: Option<String>, // TODO: should no be optional. Why is it not in our example?
-    pub credential_subject: Value,
-    pub name: Option<String>,
-    pub description: Option<String>,
-}
+// #[derive(Debug, Serialize, Deserialize)]
+// pub struct VerifiableCredential {
+//     #[serde(rename = "@context")]
+//     pub context: Vec<String>,
+//     pub id: Option<String>,
+//     #[serde(rename = "type")]
+//     pub credential_type: Vec<String>,
+//     // pub issuer: String,
+//     pub issuer: Option<String>, // TODO: should no be optional. Why is it not in our example?
+//     pub credential_subject: Value,
+//     pub name: Option<String>,
+//     pub description: Option<String>,
+// }
 
-impl fmt::Display for VerifiableCredential {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "VerifiableCredential {{ id: {:?}, credential_type: {:?}, issuer: {:?}, credential_subject: {:?}, name: {:?}, description: {:?} }}",
-            self.id, self.credential_type, self.issuer, self.credential_subject, self.name, self.description
-        )
-    }
-}
+// impl fmt::Display for VerifiableCredential {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(
+//             f,
+//             "VerifiableCredential {{ id: {:?}, credential_type: {:?}, issuer: {:?}, credential_subject: {:?}, name: {:?}, description: {:?} }}",
+//             self.id, self.credential_type, self.issuer, self.credential_subject, self.name, self.description
+//         )
+//     }
+// }
 
 impl JwtCredential {
     pub fn new(header: Value, payload: CredentialPayload, signature: String) -> Self {
