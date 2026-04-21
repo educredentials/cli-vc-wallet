@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    name: Build release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Build release
+        run: cargo build --release
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-vc-wallet
+          path: target/release/cli-vc-wallet
+          compression-level: 9
+
+  publish:
+    name: Publish to GitHub
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cli-vc-wallet
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: cli-vc-wallet
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
