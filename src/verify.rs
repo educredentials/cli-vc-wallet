@@ -203,7 +203,7 @@ pub fn verify(credential: &str) -> Result<VerificationResult, VerificationError>
         && has_verifiable_credential
         && has_issuer
         && has_subject
-        && is_expired.unwrap_or(false) == false;
+        && !is_expired.unwrap_or(false);
 
     // Check if credential has expired
     if let Some(true) = is_expired {

@@ -5,7 +5,7 @@ use crate::http_client::http_client;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-pub async fn get_from(base_url: &String) -> Result<CredentialIssuerMetadata, FetchError> {
+pub async fn get_from(base_url: &str) -> Result<CredentialIssuerMetadata, FetchError> {
     let client = http_client()?;
 
     // Normalize the base URL by removing any trailing slashes

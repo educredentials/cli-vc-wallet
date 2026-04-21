@@ -6,26 +6,25 @@ use crate::{
 pub async fn handle_offer_command(offer: &str) -> CredentialOffer {
     debug("Processing offer", Some(&offer));
     let openid_url = OpenIdCredentialOffer::new()
-        .with_uri(&offer)
+        .with_uri(offer)
         .log_expect("Invalid OpenID Credential Offer");
 
     openid_url
         .validate()
         .log_expect("Invalid OpenID Credential Offer");
 
-    let offer: CredentialOffer;
-    if openid_url.is_by_value() {
+    let offer: CredentialOffer = if openid_url.is_by_value() {
         info("Credential Offer Type", Some(&"By Value"));
-        offer = openid_url
+        openid_url
             .credential_offer()
-            .log_expect("Invalid Credential Offer");
+            .log_expect("Invalid Credential Offer")
     } else {
         info("Credential Offer Type", Some(&"By Reference"));
-        offer = openid_url
+        openid_url
             .credential_offer_by_reference()
             .await
-            .log_expect("Invalid Credential Offer");
-    }
+            .log_expect("Invalid Credential Offer")
+    };
 
     let flow = openid_url
         .credential_flow(&offer)

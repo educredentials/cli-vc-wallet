@@ -69,12 +69,12 @@ impl OpenIdCredentialOffer {
             return Err("Both pre_authorized_code and authorization_code are present".to_string());
         }
 
-        if let Some(_) = grants.pre_authorized_code {
-            return Ok(CredentialOfferFlow::PreAuthorizedCodeFlow);
-        } else if let Some(_) = grants.authorization_code {
-            return Ok(CredentialOfferFlow::AuthorizationCodeFlow);
+        if grants.pre_authorized_code.is_some() {
+            Ok(CredentialOfferFlow::PreAuthorizedCodeFlow)
+        } else if grants.authorization_code.is_some() {
+            Ok(CredentialOfferFlow::AuthorizationCodeFlow)
         } else {
-            return Err("No valid grant type found".to_string());
+            Err("No valid grant type found".to_string())
         }
     }
 
@@ -84,7 +84,7 @@ impl OpenIdCredentialOffer {
 
     pub fn credential_offer(&self) -> Result<CredentialOffer, serde_json::Error> {
         let offer = self.credential_offer.as_ref().expect("No credential offer");
-        Ok(serde_json::from_str(&offer)?)
+        serde_json::from_str(offer)
     }
 
     pub async fn credential_offer_by_reference(&self) -> Result<CredentialOffer, OfferError> {
@@ -112,7 +112,9 @@ impl OpenIdCredentialOffer {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Default)]
 pub enum CredentialOfferFlow {
+    #[default]
     PreAuthorizedCodeFlow,
     AuthorizationCodeFlow,
 }
@@ -126,11 +128,6 @@ impl fmt::Display for CredentialOfferFlow {
     }
 }
 
-impl Default for CredentialOfferFlow {
-    fn default() -> Self {
-        CredentialOfferFlow::PreAuthorizedCodeFlow
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CredentialOffer {

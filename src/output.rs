@@ -29,16 +29,16 @@ fn line_prefix(message_type: ConsoleType) -> String {
     let line_number = LINE_NUMBER.fetch_add(1, Ordering::SeqCst) + 1;
     let separator = "│";
 
-    return format!(
+    format!(
         "{} {:>3} {}",
         style(message_type).dim(),
         style(line_number).dim(),
         style(separator).dim(),
-    );
+    )
 }
 
 fn blank_prefix() -> String {
-    return " ".repeat(8);
+    " ".repeat(8)
 }
 
 pub fn attn(title: &str, message: &str) {

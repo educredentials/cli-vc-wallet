@@ -6,7 +6,6 @@ use openidconnect::AccessToken;
 use output::{debug, error, info, stdout, sub_info, LogExpect};
 use url::Url;
 
-use tokio;
 
 mod cli;
 mod cli_flow;
@@ -55,7 +54,7 @@ async fn main() {
                 .as_ref()
                 .map_or("http://localhost:8000/", |r| r.as_str());
 
-            let redirect_url = Url::parse(&redirect_url).unwrap();
+            let redirect_url = Url::parse(redirect_url).unwrap();
             debug("Redirect URL", Some(&redirect_url));
 
             let (access_token, _nonce) =
@@ -93,7 +92,7 @@ async fn main() {
             // build our proof of Possession
             let jwt_key = JwtProof::new(&keypair_str, &did_str);
             let proof = jwt_key.create_jwt(
-                &credential_issuer,
+                credential_issuer,
                 jwt::current_timestamp(),
                 nonce.as_ref().map(|s| s.to_string()),
             );
@@ -113,7 +112,7 @@ async fn main() {
                 "Requesting credential with provided proof",
                 Some(&proof.to_string()),
             );
-            let credential_endpoint = Url::parse(&credential_endpoint).unwrap();
+            let credential_endpoint = Url::parse(credential_endpoint).unwrap();
 
             // Optional Access Token
             let access_token = access_token

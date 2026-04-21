@@ -88,9 +88,9 @@ impl Display for ProofOutput {
     }
 }
 
-impl Into<String> for ProofOutput {
-    fn into(self) -> String {
-        self.jwt.unwrap_or_default()
+impl From<ProofOutput> for String {
+    fn from(val: ProofOutput) -> Self {
+        val.jwt.unwrap_or_default()
     }
 }
 
