@@ -152,88 +152,35 @@ async fn main() {
             info::<&str>("Verifying credential", None);
 
             let credential_str = credential.to_string();
-
             // Trim whitespace in case credential was read from stdin with newlines
             let credential_str = credential_str.trim().to_string();
 
             let result = verify(&credential_str);
 
             match result {
-                Ok(verification_result) => {
-                    let status = match verification_result.valid {
+                Ok(res) => {
+                    let status = match res.valid {
                         true => "VALID",
                         false => "INVALID",
                     };
-                    info("Credential is INVALID", Some(&status));
+                    info("Credential is", Some(&status));
 
-                    // Display credential info
-                    sub_info(
-                        "Issuer",
-                        Some(&verification_result.credential_info.issuer),
-                        1,
-                    );
-                    sub_info(
-                        "Subject",
-                        Some(&verification_result.credential_info.subject),
-                        1,
-                    );
-
-                    // Display verification checks
+                    sub_info("Issuer", Some(&res.credential_info.issuer), 1);
+                    sub_info("Subject", Some(&res.credential_info.subject), 2);
                     info::<&str>("Verification Checks", None);
-                    sub_info(
-                        "JWT format valid",
-                        Some(&verification_result.checks.jwt_format_valid),
-                        2,
-                    );
-                    sub_info(
-                        "Header decoded",
-                        Some(&verification_result.checks.header_decoded),
-                        2,
-                    );
-                    sub_info(
-                        "Payload decoded",
-                        Some(&verification_result.checks.payload_decoded),
-                        2,
-                    );
-                    sub_info(
-                        "Signature present",
-                        Some(&verification_result.checks.signature_present),
-                        2,
-                    );
-                    sub_info(
-                        "Has verifiable credential",
-                        Some(&verification_result.checks.has_verifiable_credential),
-                        2,
-                    );
-                    sub_info(
-                        "Has issuer",
-                        Some(&verification_result.checks.has_issuer),
-                        2,
-                    );
-                    sub_info(
-                        "Has subject",
-                        Some(&verification_result.checks.has_subject),
-                        2,
-                    );
+                    sub_info("JWT format valid", Some(&res.checks.jwt_format_valid), 1);
+                    sub_info("Header decoded", Some(&res.checks.header_decoded), 1);
+                    sub_info("Payload decoded", Some(&res.checks.payload_decoded), 1);
+                    sub_info("Signature present", Some(&res.checks.signature_present), 1);
+                    sub_info("Has VC", Some(&res.checks.has_verifiable_credential), 1);
+                    sub_info("Has issuer", Some(&res.checks.has_issuer), 1);
+                    sub_info("Has subject", Some(&res.checks.has_subject), 1);
+                    sub_info("Is expired", res.checks.is_expired.as_ref(), 1);
+                    sub_info("Expires at", res.checks.expires_at.as_ref(), 1);
+                    sub_info("Issued at", res.checks.issued_at.as_ref(), 1);
 
-                    if let Some(expired) = verification_result.checks.is_expired {
-                        sub_info("Is expired", Some(&expired), 2);
-                    }
-                    if let Some(exp) = verification_result.checks.expires_at {
-                        sub_info("Expires at", Some(&exp), 2);
-                    }
-                    if let Some(iat) = verification_result.checks.issued_at {
-                        sub_info("Issued at", Some(&iat), 2);
-                    }
-
-                    // Display header
-                    debug(
-                        "JWT Header",
-                        Some(&verification_result.credential_info.header),
-                    );
-
-                    // Print full verification result as JSON to stdout
-                    stdout(&verification_result);
+                    debug("JWT Header", Some(&res.credential_info.header));
+                    stdout(&res);
                 }
                 Err(e) => {
                     error(&format!("Credential verification failed: {}", e));
