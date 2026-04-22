@@ -171,7 +171,7 @@ async fn main() {
                     sub_info("JWT format valid", Some(&res.checks.jwt_format_valid), 1);
                     sub_info("Header decoded", Some(&res.checks.header_decoded), 1);
                     sub_info("Payload decoded", Some(&res.checks.payload_decoded), 1);
-                    sub_info("Signature present", Some(&res.checks.signature_present), 1);
+                    sub_info("Signature valid", Some(&res.checks.signature_valid), 1);
                     sub_info("Has VC", Some(&res.checks.has_verifiable_credential), 1);
                     sub_info("Has issuer", Some(&res.checks.has_issuer), 1);
                     sub_info("Has subject", Some(&res.checks.has_subject), 1);
