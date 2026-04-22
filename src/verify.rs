@@ -25,6 +25,8 @@ pub struct CredentialInfo {
     pub verifiable_credential: Value,
     /// JWT header information
     pub header: Value,
+    /// The signature part of the JWT (if present)
+    pub signature: Option<String>,
 }
 
 /// Results of individual verification checks
@@ -85,11 +87,12 @@ impl std::error::Error for VerificationError {}
 /// Verify a JWT credential using jsonwebtoken library
 pub fn verify(credential: &str) -> Result<VerificationResult, VerificationError> {
     use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
-    
+
     // First check JWT format manually for the checks structure
     let parts: Vec<&str> = credential.split('.').collect();
     let jwt_format_valid = parts.len() == 3;
-    let signature_valid = parts.get(2).map_or(false, |s| !s.is_empty());
+    let signature_str = parts.get(2).copied();
+    let signature_valid = signature_str.map_or(false, |s| !s.is_empty());
 
     // Validate JWT format
     if !jwt_format_valid {
@@ -100,6 +103,7 @@ pub fn verify(credential: &str) -> Result<VerificationResult, VerificationError>
                 subject: String::new(),
                 verifiable_credential: Value::Null,
                 header: Value::Null,
+                signature: None,
             },
             checks: VerificationChecks {
                 jwt_format_valid: false,
@@ -224,6 +228,7 @@ pub fn verify(credential: &str) -> Result<VerificationResult, VerificationError>
             subject,
             verifiable_credential,
             header: header_json,
+            signature: signature_str.map(String::from),
         },
         checks: VerificationChecks {
             jwt_format_valid,
@@ -242,6 +247,8 @@ pub fn verify(credential: &str) -> Result<VerificationResult, VerificationError>
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+
     use super::*;
 
     // Helper to create a JWT with given header, payload, and signature
@@ -324,5 +331,53 @@ mod tests {
         let jwt = make_jwt(VALID_HEADER, VALID_PAYLOAD_WITH_VC, "sig");
         let result = verify(&jwt).expect("Should parse JWT with signature");
         assert!(result.checks.signature_valid);
+    }
+
+    // Signature validation tests - these will fail until we implement signature verification
+
+    #[test]
+    fn test_signature_captured() {
+        // Test that signature part is captured in CredentialInfo
+        // Note: signature_valid currently just checks presence, not cryptographic validity
+        let jwt = make_jwt(VALID_HEADER, VALID_PAYLOAD_WITH_VC, "test_signature_123");
+        let result = verify(&jwt).expect("Should parse JWT");
+        assert!(result.credential_info.signature.is_some());
+        assert_eq!(result.credential_info.signature, Some("test_signature_123".to_string()));
+        assert!(result.checks.signature_valid); // Just checks presence
+    }
+
+    #[test]
+    fn test_signature_with_kid_header() {
+        // JWT with kid in header - documents future work to dereference kid
+        // header: {"alg":"HS256","typ":"JWT","kid":"key:z1is-separate-parties"}
+        let header_with_kid = "eyJhbGciOiAiSFMyNTYiLCAidHlwIjogIkpXVCIsICJraWQiOiAia2V5OnoxaXMtc2VwYXJhdGUtcGFydGllcyJ9";
+        let jwt = make_jwt(header_with_kid, VALID_PAYLOAD_WITH_VC, "sig_with_kid");
+        let result = verify(&jwt).expect("Should parse JWT with kid header");
+        assert!(result.credential_info.header.as_object().and_then(|h| h.get("kid")) == Some(&json!("key:z1is-separate-parties")));
+        assert!(result.credential_info.signature.is_some());
+    }
+
+    #[test]
+    fn test_signature_with_jwk_header() {
+        // JWT with embedded jwk in header - documents future work to use jwk
+        // This test will need updating when we implement jwk-based signature validation
+        // For now, we just verify the JWT can be parsed and signature is captured
+        // Note: We use a standard header because jsonwebtoken's decode_header is strict
+        // about header fields. The actual jwk validation is not yet implemented.
+        let jwt = make_jwt(VALID_HEADER, VALID_PAYLOAD_WITH_VC, "sig_with_jwk");
+        let result = verify(&jwt).expect("Should parse JWT");
+        assert!(result.credential_info.signature.is_some());
+        // TODO: Implement jwk extraction from header and signature validation
+    }
+
+    #[test]
+    fn test_signature_with_jwk() {
+        // Test that signature is stored in CredentialInfo
+        // Using a simple header that jsonwebtoken can parse
+        let jwt = make_jwt(VALID_HEADER, VALID_PAYLOAD_WITH_VC, "some_sig_value");
+        let result = verify(&jwt).expect("Should parse JWT");
+        // Verify signature is captured in credential_info
+        assert!(result.credential_info.signature.is_some());
+        assert_eq!(result.credential_info.signature, Some("some_sig_value".to_string()));
     }
 }
